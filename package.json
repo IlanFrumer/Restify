@@ -1,0 +1,13 @@
+{
+  "name": "Restify",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "author": "Ilan Frumer",
+  "license": "BSD-2-Clause",
+  "devDependencies": {
+    "grunt-contrib-coffee": "~0.7.0",
+    "grunt-contrib-uglify": "~0.2.7",
+    "grunt-contrib-watch": "~0.5.3"
+  }
+}
