@@ -113,7 +113,6 @@ module.factory 'Restify', ['$http','$q', ($http, $q)->
 
         fetch(base, route, [])
 
-
     callback(configuerer)
 
     return new Resource(baseUrl, base)
