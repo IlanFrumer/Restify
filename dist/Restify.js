@@ -5,10 +5,15 @@
 
   module.factory('Restify', [
     '$http', '$q', function($http, $q) {
-      var Resource, RestifyPromise, uriToArray;
+      var Resource, RestifyPromise, deRestify, uriToArray;
       uriToArray = function(uri) {
         return _.filter(uri.split('/'), function(a) {
           return a;
+        });
+      };
+      deRestify = function(object) {
+        return _.omit(object, function(v, k) {
+          return /^\$/.test(k) || (v && v.constructor.name === "Resource");
         });
       };
       RestifyPromise = function(promise, callback) {
@@ -41,12 +46,18 @@
           }
         }
 
-        Resource.prototype.$get = function() {
+        Resource.prototype.$get = function(restified) {
           var _this = this;
+          if (restified == null) {
+            restified = true;
+          }
           return RestifyPromise($http['get']("" + this.$$url), function(data) {
             var $id, $val, element, key, val, _ref;
             if (data._embedded != null) {
               data = data._embedded;
+            }
+            if (!restified) {
+              return data;
             }
             if (_.isArray(data)) {
               $id = 'id';
@@ -64,12 +75,12 @@
                 var element, id;
                 id = elm[$id] != null ? "/" + elm[$id] : "";
                 element = new Resource("" + _this.$$url + id, $val);
-                return angular.extend(element, elm);
+                return _.extend(element, elm);
               });
-              return angular.extend(_this, data);
+              return _.extend(_this, data);
             } else {
               element = new Resource(_this.$$url, _this.$$route);
-              return angular.extend(element, data);
+              return _.extend(element, data);
             }
           });
         };
@@ -84,7 +95,7 @@
 
         Resource.prototype.$post = function(data) {
           var _this = this;
-          return RestifyPromise($http['post']("" + this.$$url, data), function(body) {
+          return RestifyPromise($http['post']("" + this.$$url, deRestify(data)), function(body) {
             _this.response = body;
             return _this;
           });
@@ -92,7 +103,7 @@
 
         Resource.prototype.$save = function(data) {
           var _this = this;
-          return RestifyPromise($http['put']("" + this.$$url, data), function(body) {
+          return RestifyPromise($http['put']("" + this.$$url, deRestify(data || this)), function(body) {
             _this.response = body;
             return _this;
           });

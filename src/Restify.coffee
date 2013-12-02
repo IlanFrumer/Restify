@@ -7,6 +7,10 @@ module.factory 'Restify', ['$http','$q', ($http, $q)->
   uriToArray = (uri)->
     _.filter(uri.split('/'),(a)-> a)
 
+  deRestify = (object)->
+    _.omit (object) , (v,k)->
+      /^\$/.test(k) || ( v && v.constructor.name == "Resource")
+
   RestifyPromise = (promise, callback)->
     deffered = $q.defer()
 
@@ -38,11 +42,14 @@ module.factory 'Restify', ['$http','$q', ($http, $q)->
         else
           @[key] = new Resource("#{base}/#{key}", val)
 
-    $get : ()->
+    $get : (restified = true)->
       RestifyPromise $http['get']("#{@$$url}"), (data)=>
 
         if data._embedded?
           data = data._embedded
+
+        unless restified
+          return data
 
         if _.isArray(data)
           $id = 'id'
@@ -59,13 +66,13 @@ module.factory 'Restify', ['$http','$q', ($http, $q)->
 
             element = new Resource("#{@$$url}#{id}", $val)
             
-            return angular.extend(element, elm)
+            _.extend(element, elm)
 
-          return angular.extend(this, data)
+          _.extend(this,data)
 
         else
           element = new Resource(@$$url, @$$route)          
-          return angular.extend(element, data)
+          _.extend(element,data)
           
 
     $trash : () ->
@@ -74,12 +81,12 @@ module.factory 'Restify', ['$http','$q', ($http, $q)->
         return this
 
     $post : (data) ->
-      RestifyPromise $http['post']("#{@$$url}", data), (body)=>
+      RestifyPromise $http['post']("#{@$$url}", deRestify(data)), (body)=>
         this.response = body
         return this
 
     $save  : (data) ->      
-      RestifyPromise $http['put']("#{@$$url}", data), (body)=>
+      RestifyPromise $http['put']("#{@$$url}", deRestify(data || this)), (body)=>
         this.response = body
         return this
 
