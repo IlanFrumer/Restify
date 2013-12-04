@@ -11,6 +11,13 @@ module.factory 'Restify', ['$http','$q', ($http, $q)->
     _.omit (object) , (v,k)->
       /^\$/.test(k) || ( v && v.constructor.name == "Resource")
 
+  deepExtend = (obj1, obj2)->
+    result = angular.copy(obj1)
+    for key,val of obj2
+      result[key] = if _.isUndefined(result[key]) then val else angular.extend(result[key], val)
+
+    return result
+
   RestifyPromise = (promise, callback)->
     deffered = $q.defer()
 
@@ -28,19 +35,21 @@ module.factory 'Restify', ['$http','$q', ($http, $q)->
 
   class Resource
 
-    constructor: (base, route)->
+    constructor: (base, route, parent)->
 
       @$$url = base
       @$$route = route
+      @$$parent = parent
+      @$$config = {}
 
       for key,val of route
         if /^:/.test(key)
           $id = key.match(/^:(.+)/)[1]
           @["$#{$id}"] = (id)->
-            new Resource("#{base}/#{id}", val)
+            new Resource("#{base}/#{id}", val, this)
 
         else
-          @[key] = new Resource("#{base}/#{key}", val)
+          @[key] = new Resource("#{base}/#{key}", val, this)
 
     $get : (conf = {})->
 
@@ -71,31 +80,51 @@ module.factory 'Restify', ['$http','$q', ($http, $q)->
             
             id = if elm[$id]? then "/#{elm[$id]}" else ""
 
-            element = new Resource("#{@$$url}#{id}", $val)
+            element = new Resource("#{@$$url}#{id}", $val, this)
             
             _.extend(element, elm)
 
           _.extend(this,data)
 
         else
-          element = new Resource(@$$url, @$$route)          
+          element = new Resource(@$$url, @$$route, this)
           _.extend(element,data)
           
 
-    $trash : () ->
-      RestifyPromise $http['delete']("#{@$$url}"), (body)=>
-        this.response = body
-        return this
+    $delete : () ->
+      config = 
+        url: "#{@$$url}"
+        method: "DELETE"
+
+      RestifyPromise $http(config)
 
     $post : (data) ->
-      RestifyPromise $http['post']("#{@$$url}", deRestify(data)), (body)=>
-        this.response = body
-        return this
+      config = 
+        url: "#{@$$url}"
+        data: deRestify(data||this)
+        method: "PATCH"
 
-    $save  : (data) ->      
-      RestifyPromise $http['put']("#{@$$url}", deRestify(data || this)), (body)=>
-        this.response = body
-        return this
+      RestifyPromise $http(config)
+
+    $put  : (data) ->
+      config = 
+        url: "#{@$$url}"
+        data: deRestify(data||this)
+        method: "PUT"
+
+      RestifyPromise $http(config)
+
+    $patch: (data) ->
+      config = 
+        url: "#{@$$url}"
+        data: deRestify(data||this)
+        method: "PATCH"
+
+      RestifyPromise $http(config)
+
+    $config: (config) ->
+      @$$config = deepExtend(@$$config, config)
+      return this
 
   return (baseUrl, callback)->
 
@@ -122,12 +151,5 @@ module.factory 'Restify', ['$http','$q', ($http, $q)->
 
     callback(configuerer)
 
-    return new Resource(baseUrl, base)
+    return new Resource(baseUrl, base , null)
 ]
-
-# app.factory 'API', (Restify)->
-
-#   Restify '/api' , (configuerer)->
-#     configuerer.add('/stores/:identifier/branches/:id')
-#     configuerer.add('/stores/:identifier/images/:id')
-#     configuerer.add('/users/:id')

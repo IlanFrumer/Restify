@@ -5,7 +5,7 @@
 
   module.factory('Restify', [
     '$http', '$q', function($http, $q) {
-      var Resource, RestifyPromise, deRestify, uriToArray;
+      var Resource, RestifyPromise, deRestify, deepExtend, uriToArray;
       uriToArray = function(uri) {
         return _.filter(uri.split('/'), function(a) {
           return a;
@@ -15,6 +15,15 @@
         return _.omit(object, function(v, k) {
           return /^\$/.test(k) || (v && v.constructor.name === "Resource");
         });
+      };
+      deepExtend = function(obj1, obj2) {
+        var key, result, val;
+        result = angular.copy(obj1);
+        for (key in obj2) {
+          val = obj2[key];
+          result[key] = _.isUndefined(result[key]) ? val : angular.extend(result[key], val);
+        }
+        return result;
       };
       RestifyPromise = function(promise, callback) {
         var deffered;
@@ -29,19 +38,21 @@
         return deffered.promise;
       };
       Resource = (function() {
-        function Resource(base, route) {
+        function Resource(base, route, parent) {
           var $id, key, val;
           this.$$url = base;
           this.$$route = route;
+          this.$$parent = parent;
+          this.$$config = {};
           for (key in route) {
             val = route[key];
             if (/^:/.test(key)) {
               $id = key.match(/^:(.+)/)[1];
               this["$" + $id] = function(id) {
-                return new Resource("" + base + "/" + id, val);
+                return new Resource("" + base + "/" + id, val, this);
               };
             } else {
-              this[key] = new Resource("" + base + "/" + key, val);
+              this[key] = new Resource("" + base + "/" + key, val, this);
             }
           }
         }
@@ -80,39 +91,59 @@
               data = _.map(data, function(elm) {
                 var element, id;
                 id = elm[$id] != null ? "/" + elm[$id] : "";
-                element = new Resource("" + _this.$$url + id, $val);
+                element = new Resource("" + _this.$$url + id, $val, _this);
                 return _.extend(element, elm);
               });
               return _.extend(_this, data);
             } else {
-              element = new Resource(_this.$$url, _this.$$route);
+              element = new Resource(_this.$$url, _this.$$route, _this);
               return _.extend(element, data);
             }
           });
         };
 
-        Resource.prototype.$trash = function() {
-          var _this = this;
-          return RestifyPromise($http['delete']("" + this.$$url), function(body) {
-            _this.response = body;
-            return _this;
-          });
+        Resource.prototype.$delete = function() {
+          var config;
+          config = {
+            url: "" + this.$$url,
+            method: "DELETE"
+          };
+          return RestifyPromise($http(config));
         };
 
         Resource.prototype.$post = function(data) {
-          var _this = this;
-          return RestifyPromise($http['post']("" + this.$$url, deRestify(data)), function(body) {
-            _this.response = body;
-            return _this;
-          });
+          var config;
+          config = {
+            url: "" + this.$$url,
+            data: deRestify(data || this),
+            method: "PATCH"
+          };
+          return RestifyPromise($http(config));
         };
 
-        Resource.prototype.$save = function(data) {
-          var _this = this;
-          return RestifyPromise($http['put']("" + this.$$url, deRestify(data || this)), function(body) {
-            _this.response = body;
-            return _this;
-          });
+        Resource.prototype.$put = function(data) {
+          var config;
+          config = {
+            url: "" + this.$$url,
+            data: deRestify(data || this),
+            method: "PUT"
+          };
+          return RestifyPromise($http(config));
+        };
+
+        Resource.prototype.$patch = function(data) {
+          var config;
+          config = {
+            url: "" + this.$$url,
+            data: deRestify(data || this),
+            method: "PATCH"
+          };
+          return RestifyPromise($http(config));
+        };
+
+        Resource.prototype.$config = function(config) {
+          this.$$config = deepExtend(this.$$config, config);
+          return this;
         };
 
         return Resource;
@@ -139,7 +170,7 @@
           }
         };
         callback(configuerer);
-        return new Resource(baseUrl, base);
+        return new Resource(baseUrl, base, null);
       };
     }
   ]);
