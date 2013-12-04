@@ -46,12 +46,18 @@
           }
         }
 
-        Resource.prototype.$get = function(restified) {
-          var _this = this;
-          if (restified == null) {
-            restified = true;
+        Resource.prototype.$get = function(conf) {
+          var config, restified,
+            _this = this;
+          if (conf == null) {
+            conf = {};
           }
-          return RestifyPromise($http['get']("" + this.$$url), function(data) {
+          config = {};
+          restified = _.isUndefined(conf.restified) ? true : conf.restified;
+          if (!_.isUndefined(conf.params)) {
+            config.params = conf.params;
+          }
+          return RestifyPromise($http['get']("" + this.$$url, config), function(data) {
             var $id, $val, element, key, val, _ref;
             if (data._embedded != null) {
               data = data._embedded;

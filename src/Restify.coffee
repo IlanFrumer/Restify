@@ -42,8 +42,15 @@ module.factory 'Restify', ['$http','$q', ($http, $q)->
         else
           @[key] = new Resource("#{base}/#{key}", val)
 
-    $get : (restified = true)->
-      RestifyPromise $http['get']("#{@$$url}"), (data)=>
+    $get : (conf = {})->
+
+      config = {}
+
+      restified = if _.isUndefined(conf.restified) then true else conf.restified
+      unless _.isUndefined(conf.params)
+        config.params = conf.params
+
+      RestifyPromise $http['get']("#{@$$url}", config), (data)=>
 
         if data._embedded?
           data = data._embedded
