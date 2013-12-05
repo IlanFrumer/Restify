@@ -1,5 +1,5 @@
 /**
- *  Restify v0.0.2
+ *  Restify v0.0.3
  *  (c) 2013 Ilan Frumer
  *  License: MIT
  */

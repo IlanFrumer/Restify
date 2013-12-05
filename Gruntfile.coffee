@@ -53,3 +53,9 @@ module.exports = (grunt)->
     'usebanner:dist'
     'watch'
   ]
+
+  grunt.registerTask 'build', [
+    'coffee:compile'
+    'uglify:dist'
+    'usebanner:dist'
+  ]  
