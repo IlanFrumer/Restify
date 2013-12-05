@@ -1,7 +1,7 @@
 {
   "name": "restify",
   "description": "Restful factory for AngularJS",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "ignore": [],
   "dependencies": {
     "angular": "*",
@@ -20,7 +20,7 @@
   "ignore": [
     "src",
     ".*",
-    "Gruntfile.coffee",
-    "package.json"
+    "*.json",
+    "*.coffee",
   ]  
 }
