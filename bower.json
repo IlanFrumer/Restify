@@ -1,5 +1,5 @@
 {
-  "name": "Restify",
+  "name": "restify",
   "description": "Restful factory for AngularJS",
   "version": "0.0.1",
   "ignore": [],

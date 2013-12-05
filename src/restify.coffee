@@ -1,8 +1,8 @@
 # hasBody = /^(POST|PUT|PATCH)$/i.test(action.method)
 
-module = angular.module('Restify', [])
+module = angular.module('restify', [])
 
-module.factory 'Restify', ['$http','$q', ($http, $q)->
+module.factory 'restify', ['$http','$q', ($http, $q)->
 
   uriToArray = (uri)->
     _.filter(uri.split('/'),(a)-> a)

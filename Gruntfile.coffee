@@ -21,12 +21,12 @@ module.exports = (grunt)->
     coffee:
       compile:
         files:
-          'dist/Restify.js': 'src/Restify.coffee'
+          'dist/restify.js': 'src/restify.coffee'
 
     uglify:
       dist:
         files: 
-          'dist/Restify.min.js': 'dist/Restify.js'
+          'dist/restify.min.js': 'dist/restify.js'
 
     usebanner:
       dist:
@@ -36,15 +36,15 @@ module.exports = (grunt)->
           banner: banner
                  
         files:
-          src: [ 'dist/Restify.js' , 'dist/Restify.min.js' ]
+          src: [ 'dist/restify.js' , 'dist/restify.min.js' ]
 
     watch:
       coffee:
-        files: 'src/Restify.coffee'
+        files: 'src/restify.coffee'
         tasks : 'coffee:compile'
 
       uglify:
-        files: 'dist/Restify.js'
+        files: 'dist/restify.js'
         tasks: ['uglify:dist']
 
   grunt.registerTask 'default', [
