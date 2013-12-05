@@ -18,12 +18,12 @@ module.factory 'Restify', ['$http','$q', ($http, $q)->
 
     return result
 
-  RestifyPromise = (promise, callback)->
+  RestifyPromise = (promise, restifyData)->
     deffered = $q.defer()
 
     promise.success (data, status, headers, config)->
 
-      data = callback(data)
+      data = restifyData(data)
 
       deffered.resolve(data)
 
@@ -47,24 +47,26 @@ module.factory 'Restify', ['$http','$q', ($http, $q)->
           $id = key.match(/^:(.+)/)[1]
           @["$#{$id}"] = (id)->
             new Resource("#{base}/#{id}", val, this)
-
         else
           @[key] = new Resource("#{base}/#{key}", val, this)
 
-    $get : (conf = {})->
+    $uget : (conf = {})-> @get(conf, false)
 
-      config = {}
+    $get : (conf = {}, toWrap = true)->
 
-      restified = if _.isUndefined(conf.restified) then true else conf.restified
+      config = 
+        url: "#{@$$url}"
+        method: "GET"
+
       unless _.isUndefined(conf.params)
         config.params = conf.params
 
-      RestifyPromise $http['get']("#{@$$url}", config), (data)=>
+      RestifyPromise $http(config), (data)=>
 
         if data._embedded?
           data = data._embedded
 
-        unless restified
+        unless toWrap
           return data
 
         if _.isArray(data)
@@ -90,7 +92,6 @@ module.factory 'Restify', ['$http','$q', ($http, $q)->
           element = new Resource(@$$url, @$$route, this)
           _.extend(element,data)
           
-
     $delete : () ->
       config = 
         url: "#{@$$url}"

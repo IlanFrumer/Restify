@@ -1,3 +1,9 @@
+/**
+ *  Restify v0.0.1
+ *  (c) 2013 Ilan Frumer
+ *  License: MIT
+ */
+
 (function() {
   var module;
 
@@ -25,11 +31,11 @@
         }
         return result;
       };
-      RestifyPromise = function(promise, callback) {
+      RestifyPromise = function(promise, restifyData) {
         var deffered;
         deffered = $q.defer();
         promise.success(function(data, status, headers, config) {
-          data = callback(data);
+          data = restifyData(data);
           return deffered.resolve(data);
         });
         promise.error(function(data, status, headers, config) {
@@ -57,23 +63,35 @@
           }
         }
 
-        Resource.prototype.$get = function(conf) {
-          var config, restified,
+        Resource.prototype.$uget = function(conf) {
+          if (conf == null) {
+            conf = {};
+          }
+          return this.get(conf, false);
+        };
+
+        Resource.prototype.$get = function(conf, toWrap) {
+          var config,
             _this = this;
           if (conf == null) {
             conf = {};
           }
-          config = {};
-          restified = _.isUndefined(conf.restified) ? true : conf.restified;
+          if (toWrap == null) {
+            toWrap = true;
+          }
+          config = {
+            url: "" + this.$$url,
+            method: "GET"
+          };
           if (!_.isUndefined(conf.params)) {
             config.params = conf.params;
           }
-          return RestifyPromise($http['get']("" + this.$$url, config), function(data) {
+          return RestifyPromise($http(config), function(data) {
             var $id, $val, element, key, val, _ref;
             if (data._embedded != null) {
               data = data._embedded;
             }
-            if (!restified) {
+            if (!toWrap) {
               return data;
             }
             if (_.isArray(data)) {

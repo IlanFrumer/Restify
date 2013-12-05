@@ -1,10 +1,22 @@
+banner = """
+/**
+ *  <%= pkg.name %> v<%= pkg.version %>
+ *  (c) 2013 <%= pkg.author %>
+ *  License: <%= pkg.license %>
+ */
+
+"""
+
 module.exports = (grunt)->
 
   grunt.loadNpmTasks 'grunt-contrib-coffee'
   grunt.loadNpmTasks 'grunt-contrib-uglify'
   grunt.loadNpmTasks 'grunt-contrib-watch'
+  grunt.loadNpmTasks 'grunt-banner'
 
   grunt.initConfig
+
+    pkg: grunt.file.readJSON("package.json")
 
     coffee:
       compile:
@@ -16,6 +28,16 @@ module.exports = (grunt)->
         files: 
           'dist/Restify.min.js': 'dist/Restify.js'
 
+    usebanner:
+      dist:
+        options: 
+          position: 'top'
+          linebreak: true
+          banner: banner
+                 
+        files:
+          src: [ 'dist/Restify.js' , 'dist/Restify.min.js' ]
+
     watch:
       coffee:
         files: 'src/Restify.coffee'
@@ -23,10 +45,11 @@ module.exports = (grunt)->
 
       uglify:
         files: 'dist/Restify.js'
-        tasks: 'uglify:dist'
+        tasks: ['uglify:dist']
 
   grunt.registerTask 'default', [
     'coffee:compile'
     'uglify:dist'
+    'usebanner:dist'
     'watch'
   ]
