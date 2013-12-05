@@ -1,0 +1,26 @@
+{
+  "name": "Restify",
+  "description": "Restful factory for AngularJS",
+  "version": "0.0.1",
+  "ignore": [],
+  "dependencies": {
+    "angular": "*",
+    "lodash": "~2.4.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/IlanFrumer/Restify.git"
+  },
+  "keywords": [
+    "angularjs",
+    "rest",
+    "coffeescript",
+    "library"
+  ],
+  "ignore": [
+    "src",
+    ".*",
+    "Gruntfile.coffee",
+    "package.json"
+  ]  
+}
