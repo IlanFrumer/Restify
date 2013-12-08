@@ -1,13 +1,26 @@
+/**
+ *  Restify v0.1.3
+ *  (c) 2013 Ilan Frumer
+ *  License: MIT
+ */
+
 (function() {
-  var module;
+  var module, original;
 
   module = angular.module('restify', []);
 
+  original = {};
+
+  module.config([
+    '$httpProvider', function($httpProvider) {
+      original.transformRequest = $httpProvider.defaults.transformRequest[0];
+      return original.transformResponse = $httpProvider.defaults.transformResponse[0];
+    }
+  ]);
+
   module.factory('restify', [
     '$http', '$q', function($http, $q) {
-      var Restify, RestifyPromise, configFactory, deRestify, originalTransformRequest, originalTransformResponse, uriToArray;
-      originalTransformRequest = $http.defaults.transformRequest[0];
-      originalTransformResponse = $http.defaults.transformResponse[0];
+      var Restify, RestifyPromise, configFactory, deRestify, uriToArray;
       uriToArray = function(uri) {
         return _.filter(uri.split('/'), function(a) {
           return a;
@@ -35,14 +48,14 @@
         reqI = _.find(tree, '$$requestInterceptor');
         resI = _.find(tree, '$$responseInterceptor');
         config.transformRequest = function(config) {
-          config = originalTransformRequest(config);
+          config = original.transformRequest(config);
           if (!angular.isUndefined(reqI)) {
             reqI.$$requestInterceptor(config);
           }
           return config || $q.when(config);
         };
         config.transformResponse = function(data, headers) {
-          data = originalTransformResponse(data, headers);
+          data = original.transformResponse(data, headers);
           if (!angular.isUndefined(resI)) {
             resI.$$responseInterceptor(data, headers);
           }

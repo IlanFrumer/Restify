@@ -2,10 +2,14 @@
 
 module = angular.module('restify', [])
 
-module.factory 'restify', ['$http','$q', ($http, $q)->
+original = {}
 
-  originalTransformRequest  = $http.defaults.transformRequest[0]
-  originalTransformResponse = $http.defaults.transformResponse[0]
+module.config ['$httpProvider', ($httpProvider)->
+  original.transformRequest  = $httpProvider.defaults.transformRequest[0]
+  original.transformResponse = $httpProvider.defaults.transformResponse[0]
+]
+
+module.factory 'restify', ['$http','$q', ($http, $q)->
 
   uriToArray = (uri)->
     _.filter(uri.split('/'),(a)-> a)
@@ -31,14 +35,14 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
 
     config.transformRequest = (config)->
       
-      config = originalTransformRequest(config)
+      config = original.transformRequest(config)
       reqI.$$requestInterceptor(config) unless angular.isUndefined(reqI)
 
       return config || $q.when(config)
 
     config.transformResponse = (data, headers)->
 
-      data = originalTransformResponse(data, headers)
+      data = original.transformResponse(data, headers)
       resI.$$responseInterceptor(data,headers) unless angular.isUndefined(resI)
 
       return data || $q.when(data)
