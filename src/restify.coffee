@@ -11,6 +11,34 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
     _.omit (object) , (v,k)->
       /^\$/.test(k) || ( v && v.constructor.name == "Restify")
 
+    headers = @$$headers || {}
+
+    _this = this
+    while _this = _this.$$parent
+      headers = _.merge(_this.$$headers || {} , headers)
+    
+    return headers
+
+
+  configFactory  = (method, data)->
+    config = {}
+    config.url = @$$url
+    config.method = method
+    config.data = deRestify(data) unless angular.isUndefined(data)
+
+    # create parent tree
+    tree = [] ; _this = this
+    while _this
+      tree.push(_this)
+      _this = _this.$$parent
+
+    config.headers = _.reduceRight tree, ((headers, object)-> _.defaults(headers, object.$$headers || {})),{}
+    config.transformRequest = reqI.$$requestInterceptor if reqI = _.find(tree,'$$requestInterceptor')
+    config.transformRequest = resI.$$responseInterceptor if resI = _.find(tree,'$$responseInterceptor')
+    
+
+    return config
+
   RestifyPromise = (promise, restifyData)->
     deffered = $q.defer()
 
@@ -37,12 +65,12 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
       @$$url = base
       @$$route = route
       @$$parent = parent
-      @$$config = {}
 
       for key,val of route
+        base = "" if base == "/"
         if /^:/.test(key)
           $id = key.match(/^:(.+)/)[1]
-          @["$#{$id}"] = (id)->
+          @["$#{$id}"] = (id)->            
             new Restify("#{base}/#{id}", val, this)
         else
           @[key] = new Restify("#{base}/#{key}", val, this)
@@ -50,10 +78,7 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
     $uget : (conf = {})-> @get(conf, false)
 
     $get : (conf = {}, toWrap = true)->
-
-      config = 
-        url: "#{@$$url}"
-        method: "GET"
+      config = configFactory.call(this,'GET')
 
       unless _.isUndefined(conf.params)
         config.params = conf.params
@@ -87,47 +112,40 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
 
         else
           element = new Restify(@$$url, @$$route, this)
-          _.extend(element,data)
-          
-    $delete : () ->
-      config = 
-        url: "#{@$$url}"
-        method: "DELETE"
+          _.extend(element,data)        
 
+    $delete : () ->
+      config = configFactory.call(this,'DELETE')
       RestifyPromise $http(config)
 
     $post : (data) ->
-      config = 
-        url: "#{@$$url}"
-        data: deRestify(data||this)
-        method: "PATCH"
-
+      config = configFactory.call(this,'POST',this || data)
       RestifyPromise $http(config)
 
     $put  : (data) ->
-      config = 
-        url: "#{@$$url}"
-        data: deRestify(data||this)
-        method: "PUT"
-
+      config = configFactory.call(this,'PUT',this || data)
       RestifyPromise $http(config)
 
     $patch: (data) ->
-      config = 
-        url: "#{@$$url}"
-        data: deRestify(data||this)
-        method: "PATCH"
-
+      config = configFactory.call(this,'PATCH',this || data)
       RestifyPromise $http(config)      
 
-    $config: (methods, config)->
+    $setHeaders: (headers)->
+      @$$headers = {} if angular.isUndefined(@$$headers)
 
-      ## TODO: make headers case insensitive
-      methods = [methods] if _.isString(methods)
-      for method in methods
-        @$$config[method] = @$$config[method] || {}
-        _.merge(@$$config[method], config)
+      for key,val of headers        
+        @$$headers[key.toUpperCase()] = val
+
       return this
+
+    $setResponseInterceptor: (callback)->
+      @$$responseInterceptor = callback
+      return this
+
+    $setRequestInterceptor: (callback)->
+      @$$requestInterceptor = callback
+      return this
+
 
   return (baseUrl, callback)->
 
@@ -154,5 +172,5 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
 
     callback(configuerer)
 
-    return new Restify(baseUrl, base , null)
+    return new Restify(baseUrl, base , undefined)
 ]

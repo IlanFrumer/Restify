@@ -5,16 +5,48 @@
 
   module.factory('restify', [
     '$http', '$q', function($http, $q) {
-      var Restify, RestifyPromise, deRestify, uriToArray;
+      var Restify, RestifyPromise, configFactory, deRestify, uriToArray;
       uriToArray = function(uri) {
         return _.filter(uri.split('/'), function(a) {
           return a;
         });
       };
       deRestify = function(object) {
-        return _.omit(object, function(v, k) {
+        var headers, _this;
+        _.omit(object, function(v, k) {
           return /^\$/.test(k) || (v && v.constructor.name === "Restify");
         });
+        headers = this.$$headers || {};
+        _this = this;
+        while (_this = _this.$$parent) {
+          headers = _.merge(_this.$$headers || {}, headers);
+        }
+        return headers;
+      };
+      configFactory = function(method, data) {
+        var config, reqI, resI, tree, _this;
+        config = {};
+        config.url = this.$$url;
+        config.method = method;
+        if (!angular.isUndefined(data)) {
+          config.data = deRestify(data);
+        }
+        tree = [];
+        _this = this;
+        while (_this) {
+          tree.push(_this);
+          _this = _this.$$parent;
+        }
+        config.headers = _.reduceRight(tree, (function(headers, object) {
+          return _.defaults(headers, object.$$headers || {});
+        }), {});
+        if (reqI = _.find(tree, '$$requestInterceptor')) {
+          config.transformRequest = reqI.$$requestInterceptor;
+        }
+        if (resI = _.find(tree, '$$responseInterceptor')) {
+          config.transformRequest = resI.$$responseInterceptor;
+        }
+        return config;
       };
       RestifyPromise = function(promise, restifyData) {
         var deffered;
@@ -34,9 +66,11 @@
           this.$$url = base;
           this.$$route = route;
           this.$$parent = parent;
-          this.$$config = {};
           for (key in route) {
             val = route[key];
+            if (base === "/") {
+              base = "";
+            }
             if (/^:/.test(key)) {
               $id = key.match(/^:(.+)/)[1];
               this["$" + $id] = function(id) {
@@ -64,10 +98,7 @@
           if (toWrap == null) {
             toWrap = true;
           }
-          config = {
-            url: "" + this.$$url,
-            method: "GET"
-          };
+          config = configFactory.call(this, 'GET');
           if (!_.isUndefined(conf.params)) {
             config.params = conf.params;
           }
@@ -107,53 +138,47 @@
 
         Restify.prototype.$delete = function() {
           var config;
-          config = {
-            url: "" + this.$$url,
-            method: "DELETE"
-          };
+          config = configFactory.call(this, 'DELETE');
           return RestifyPromise($http(config));
         };
 
         Restify.prototype.$post = function(data) {
           var config;
-          config = {
-            url: "" + this.$$url,
-            data: deRestify(data || this),
-            method: "PATCH"
-          };
+          config = configFactory.call(this, 'POST', this || data);
           return RestifyPromise($http(config));
         };
 
         Restify.prototype.$put = function(data) {
           var config;
-          config = {
-            url: "" + this.$$url,
-            data: deRestify(data || this),
-            method: "PUT"
-          };
+          config = configFactory.call(this, 'PUT', this || data);
           return RestifyPromise($http(config));
         };
 
         Restify.prototype.$patch = function(data) {
           var config;
-          config = {
-            url: "" + this.$$url,
-            data: deRestify(data || this),
-            method: "PATCH"
-          };
+          config = configFactory.call(this, 'PATCH', this || data);
           return RestifyPromise($http(config));
         };
 
-        Restify.prototype.$config = function(methods, config) {
-          var method, _i, _len;
-          if (_.isString(methods)) {
-            methods = [methods];
+        Restify.prototype.$setHeaders = function(headers) {
+          var key, val;
+          if (angular.isUndefined(this.$$headers)) {
+            this.$$headers = {};
           }
-          for (_i = 0, _len = methods.length; _i < _len; _i++) {
-            method = methods[_i];
-            this.$$config[method] = this.$$config[method] || {};
-            _.merge(this.$$config[method], config);
+          for (key in headers) {
+            val = headers[key];
+            this.$$headers[key.toUpperCase()] = val;
           }
+          return this;
+        };
+
+        Restify.prototype.$setResponseInterceptor = function(callback) {
+          this.$$responseInterceptor = callback;
+          return this;
+        };
+
+        Restify.prototype.$setRequestInterceptor = function(callback) {
+          this.$$requestInterceptor = callback;
           return this;
         };
 
@@ -181,7 +206,7 @@
           }
         };
         callback(configuerer);
-        return new Restify(baseUrl, base, null);
+        return new Restify(baseUrl, base, void 0);
       };
     }
   ]);

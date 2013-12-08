@@ -1,26 +1,32 @@
 
-## Install
+# [Restify](https://github.com/IlanFrumer/Restify)
+Restful factory for AngularJS.
 
-* `bower install restify`
-* `<script src="bower_components/restify/dist/resrify.min.js">`
+### Install
 
-## Dependencies
+- `bower install restify`
+- `<script src="bower_components/restify/dist/resrify.min.js">`
+
+### Dependencies
 
 - [Angular.js](https://github.com/angular/angular.js)
 - [Lodash](https://github.com/lodash/lodash)
 
-## Example
+### Example
 
-````coffeescript
-# declare resify as a dependency for your app module
+```coffee
+# declare resify as a dependency of your application module
 app = angular.module('yourModule',['restify'])
 
+# create a service by injecting restify and using its factory function
+# note: you should probably create one service for the whole api
+#       and then pass it all over the place
 
-# create a service by injecting restify and use its factory
 app.factory 'API', ['restify',(resrify)->
   
-  # restify gets a base url and a config callback function
-  # and returns a Restified Object
+  # restify 
+  # gets a base url and a configuration block
+  # returns a Restified Object
 
   restify '/api' , (config)->
 
@@ -32,9 +38,9 @@ app.factory 'API', ['restify',(resrify)->
 ]
 
 
-# inject your factory and start playing
+# inject your service and start playing
 
-app.controller 'MyCtrl',['$scop', 'API', ($scope, API)->
+app.controller 'MyCtrl',['$scope', 'API', ($scope, API)->
 
   # GET /api/users
   API.users.$get().then (users)->
@@ -43,7 +49,7 @@ app.controller 'MyCtrl',['$scop', 'API', ($scope, API)->
   $scope.userImages (user)->
     # provided that user.id == 123
     # GET /api/users/123/images
-    # the response will automatically add the images array to user.images  
+    # it will automatically be added to user.images after the response
     user.images.$uget()
 
   $scope.create (user)->
@@ -65,9 +71,9 @@ app.controller 'MyCtrl',['$scop', 'API', ($scope, API)->
       $scope.users = _.without($scope.users,user)
 ]
 
-````
+```
 ##### View:
-````html
+```html
   <ul>
     <li ng-repeat="user in users">
       <input type="text" ng-model="user.name">
@@ -84,52 +90,60 @@ app.controller 'MyCtrl',['$scop', 'API', ($scope, API)->
   </ul>  
 ````
 
-## Restify Class
+### Restify Class
 
 #### Own properties
-     All own properties are prefixed with $$
-     All inherited methods are prefixed with $
-     Owned properties are to be used internally, don't mess with them!
+     All own properties are prefixed with $$     
+     Owned properties are ment to be used internally, don't mess with them!
 
 * **$$url**
 * **$$route**
 * **$$parent**
-* **$$config**
+* **$$headers**
+* **$$requestInterceptor**
+* **$$responseInterceptor**
 
-#### Methods that all Restified objects inherit through the prototype chain
-
-* **$get()**: Returns a restified response body
-* **$uget()**: Returns an unrestified response body
-* **$delete()**:
+#### All Restified objects inherits those methods through the prototype chain
+     All inherited methods are prefixed with $
 
 #### If data is provided than request is made with it
      Else, sends the object itself stripped from functions or Restified objects.
 
-* **$post([data])**:
-* **$patch([data])**:
-* **$put([data])**:
+* **$get()**: getting the response and restifing it
+* **$uget()**: getting the response without restifing it
+* **$delete()**
 
+##### if data is not provided then this object is sent , stripped from functions or Restified objects.
 
-## Configartion
+* **$post([data])** 
+* **$patch([data])**
+* **$put([data])**
 
-Any restify object inherits configuration from it's parent chain and may override it
+##### configuration methods
 
-````coffeescript
-## parent chain: a > b > c > d
-a = api
-b = api.users
-c = api.$id(123)
-d = api.$id(123).images
+* **$setHeaders(headers)**
+* **$setResponseInterceptor(callback)**
+* **$setRequestInterceptor(callback)**
 
-a.$config({headers: {'X-AUTH-TOKEN': 123}})
-d.$get() # sends X-AUTH-TOKEN: 123
+### Configartion
 
-b.$config({headers: {'X-AUTH-TOKEN': 456}})
-d.$get() # sends X-AUTH-TOKEN: 456
+All restified object inherits configuration from it's parent chain and may override it
 
-a.$get() # still sends X-AUTH-TOKEN: 123
+````coffee
+# parent chain: api > users > user
+
+users = api.users
+user = users.$id(123)
+
+api.$setHeaders({'X-AUTH-TOKEN': 123})
+user.$get() # sends X-AUTH-TOKEN: 123
+
+users.$setHeaders({'X-AUTH-TOKEN': 456})
+user.$get() # sends X-AUTH-TOKEN: 456
+
+api.$get() # still sends X-AUTH-TOKEN: 123
 
 # note: $id creates a new restified object
-e = api.users # === b
-f = api.users.$id(123) # !== c
+sameUser = users.$id(123)
+sameUser === user # false !!!
 ````
