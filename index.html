@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Try</title>
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.4/angular.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/2.4.1/lodash.min.js"></script>
+	<script src="dist/restify.js"></script>
+</head>
+<body ng-app="app">
+	
+</body>
+<script>
+	
+	var app = angular.module('app', ['restify']);
+
+	app.factory('api',function(restify){
+
+		return restify('/',function(conf){
+			conf.add('/users/:id');
+		});
+
+	});
+
+	app.run(function(api,$http){
+		window.api = api;
+		window.$http = $http;
+	});
+
+
+</script>
+</html>

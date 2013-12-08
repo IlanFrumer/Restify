@@ -1,9 +1,3 @@
-/**
- *  Restify v0.0.3
- *  (c) 2013 Ilan Frumer
- *  License: MIT
- */
-
 (function() {
   var module;
 
@@ -11,7 +5,7 @@
 
   module.factory('restify', [
     '$http', '$q', function($http, $q) {
-      var Resource, RestifyPromise, deRestify, deepExtend, uriToArray;
+      var Restify, RestifyPromise, deRestify, uriToArray;
       uriToArray = function(uri) {
         return _.filter(uri.split('/'), function(a) {
           return a;
@@ -19,17 +13,8 @@
       };
       deRestify = function(object) {
         return _.omit(object, function(v, k) {
-          return /^\$/.test(k) || (v && v.constructor.name === "Resource");
+          return /^\$/.test(k) || (v && v.constructor.name === "Restify");
         });
-      };
-      deepExtend = function(obj1, obj2) {
-        var key, result, val;
-        result = angular.copy(obj1);
-        for (key in obj2) {
-          val = obj2[key];
-          result[key] = _.isUndefined(result[key]) ? val : angular.extend(result[key], val);
-        }
-        return result;
       };
       RestifyPromise = function(promise, restifyData) {
         var deffered;
@@ -43,8 +28,8 @@
         });
         return deffered.promise;
       };
-      Resource = (function() {
-        function Resource(base, route, parent) {
+      Restify = (function() {
+        function Restify(base, route, parent) {
           var $id, key, val;
           this.$$url = base;
           this.$$route = route;
@@ -55,22 +40,22 @@
             if (/^:/.test(key)) {
               $id = key.match(/^:(.+)/)[1];
               this["$" + $id] = function(id) {
-                return new Resource("" + base + "/" + id, val, this);
+                return new Restify("" + base + "/" + id, val, this);
               };
             } else {
-              this[key] = new Resource("" + base + "/" + key, val, this);
+              this[key] = new Restify("" + base + "/" + key, val, this);
             }
           }
         }
 
-        Resource.prototype.$uget = function(conf) {
+        Restify.prototype.$uget = function(conf) {
           if (conf == null) {
             conf = {};
           }
           return this.get(conf, false);
         };
 
-        Resource.prototype.$get = function(conf, toWrap) {
+        Restify.prototype.$get = function(conf, toWrap) {
           var config,
             _this = this;
           if (conf == null) {
@@ -109,18 +94,18 @@
               data = _.map(data, function(elm) {
                 var element, id;
                 id = elm[$id] != null ? "/" + elm[$id] : "";
-                element = new Resource("" + _this.$$url + id, $val, _this);
+                element = new Restify("" + _this.$$url + id, $val, _this);
                 return _.extend(element, elm);
               });
               return _.extend(_this, data);
             } else {
-              element = new Resource(_this.$$url, _this.$$route, _this);
+              element = new Restify(_this.$$url, _this.$$route, _this);
               return _.extend(element, data);
             }
           });
         };
 
-        Resource.prototype.$delete = function() {
+        Restify.prototype.$delete = function() {
           var config;
           config = {
             url: "" + this.$$url,
@@ -129,7 +114,7 @@
           return RestifyPromise($http(config));
         };
 
-        Resource.prototype.$post = function(data) {
+        Restify.prototype.$post = function(data) {
           var config;
           config = {
             url: "" + this.$$url,
@@ -139,7 +124,7 @@
           return RestifyPromise($http(config));
         };
 
-        Resource.prototype.$put = function(data) {
+        Restify.prototype.$put = function(data) {
           var config;
           config = {
             url: "" + this.$$url,
@@ -149,7 +134,7 @@
           return RestifyPromise($http(config));
         };
 
-        Resource.prototype.$patch = function(data) {
+        Restify.prototype.$patch = function(data) {
           var config;
           config = {
             url: "" + this.$$url,
@@ -159,12 +144,20 @@
           return RestifyPromise($http(config));
         };
 
-        Resource.prototype.$config = function(config) {
-          this.$$config = deepExtend(this.$$config, config);
+        Restify.prototype.$config = function(methods, config) {
+          var method, _i, _len;
+          if (_.isString(methods)) {
+            methods = [methods];
+          }
+          for (_i = 0, _len = methods.length; _i < _len; _i++) {
+            method = methods[_i];
+            this.$$config[method] = this.$$config[method] || {};
+            _.merge(this.$$config[method], config);
+          }
           return this;
         };
 
-        return Resource;
+        return Restify;
 
       })();
       return function(baseUrl, callback) {
@@ -188,7 +181,7 @@
           }
         };
         callback(configuerer);
-        return new Resource(baseUrl, base, null);
+        return new Restify(baseUrl, base, null);
       };
     }
   ]);

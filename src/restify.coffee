@@ -9,19 +9,14 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
 
   deRestify = (object)->
     _.omit (object) , (v,k)->
-      /^\$/.test(k) || ( v && v.constructor.name == "Resource")
-
-  deepExtend = (obj1, obj2)->
-    result = angular.copy(obj1)
-    for key,val of obj2
-      result[key] = if _.isUndefined(result[key]) then val else angular.extend(result[key], val)
-
-    return result
+      /^\$/.test(k) || ( v && v.constructor.name == "Restify")
 
   RestifyPromise = (promise, restifyData)->
     deffered = $q.defer()
 
     promise.success (data, status, headers, config)->
+
+      # TODO: response interceptor
 
       data = restifyData(data)
 
@@ -29,11 +24,13 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
 
     promise.error (data, status, headers, config)->
 
+      # TODO: response error interceptor
+
       deffered.reject(data)
 
     deffered.promise
 
-  class Resource
+  class Restify
 
     constructor: (base, route, parent)->
 
@@ -46,9 +43,9 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
         if /^:/.test(key)
           $id = key.match(/^:(.+)/)[1]
           @["$#{$id}"] = (id)->
-            new Resource("#{base}/#{id}", val, this)
+            new Restify("#{base}/#{id}", val, this)
         else
-          @[key] = new Resource("#{base}/#{key}", val, this)
+          @[key] = new Restify("#{base}/#{key}", val, this)
 
     $uget : (conf = {})-> @get(conf, false)
 
@@ -82,14 +79,14 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
             
             id = if elm[$id]? then "/#{elm[$id]}" else ""
 
-            element = new Resource("#{@$$url}#{id}", $val, this)
+            element = new Restify("#{@$$url}#{id}", $val, this)
             
             _.extend(element, elm)
 
           _.extend(this,data)
 
         else
-          element = new Resource(@$$url, @$$route, this)
+          element = new Restify(@$$url, @$$route, this)
           _.extend(element,data)
           
     $delete : () ->
@@ -121,10 +118,15 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
         data: deRestify(data||this)
         method: "PATCH"
 
-      RestifyPromise $http(config)
+      RestifyPromise $http(config)      
 
-    $config: (config) ->
-      @$$config = deepExtend(@$$config, config)
+    $config: (methods, config)->
+
+      ## TODO: make headers case insensitive
+      methods = [methods] if _.isString(methods)
+      for method in methods
+        @$$config[method] = @$$config[method] || {}
+        _.merge(@$$config[method], config)
       return this
 
   return (baseUrl, callback)->
@@ -152,5 +154,5 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
 
     callback(configuerer)
 
-    return new Resource(baseUrl, base , null)
+    return new Restify(baseUrl, base , null)
 ]
