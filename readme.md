@@ -1,4 +1,3 @@
-
 # [Restify](https://github.com/IlanFrumer/Restify)
 Restful factory for AngularJS.
 
@@ -92,9 +91,9 @@ app.controller 'MyCtrl',['$scope', 'API', ($scope, API)->
 
 ### Restify Class
 
-#### Own properties
-     All own properties are prefixed with $$     
-     Owned properties are ment to be used internally, don't mess with them!
+#### Own properties (_All own properties are prefixed with $$_)
+
+Owned properties are ment to be used internally, don't mess with them!
 
 * **$$url**
 * **$$route**
@@ -103,23 +102,17 @@ app.controller 'MyCtrl',['$scope', 'API', ($scope, API)->
 * **$$requestInterceptor**
 * **$$responseInterceptor**
 
-#### All Restified objects inherits those methods through the prototype chain
-     All inherited methods are prefixed with $
 
-#### If data is provided than request is made with it
-     Else, sends the object itself stripped from functions or Restified objects.
+#### Methods (_All inherited methods are prefixed with $_)
 
 * **$get()**: getting the response and restifing it
 * **$uget()**: getting the response without restifing it
-* **$delete()**
+* **$delete()**: 
+* **$post([data])**: If data is not provided then this object is sent stripped from functions or Restified objects.
+* **$patch([data])**: If data is not provided then this object is sent stripped from functions or Restified objects.
+* **$put([data])**: If data is not provided then this object is sent stripped from functions or Restified objects.
 
-##### if data is not provided then this object is sent , stripped from functions or Restified objects.
-
-* **$post([data])** 
-* **$patch([data])**
-* **$put([data])**
-
-##### configuration methods
+Configuration methods(_see below_)
 
 * **$setHeaders(headers)**
 * **$setResponseInterceptor(callback)**
