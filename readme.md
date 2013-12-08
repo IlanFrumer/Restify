@@ -45,22 +45,22 @@ app.controller 'MyCtrl',['$scope', 'API', ($scope, API)->
   API.users.$get().then (users)->
     $scope.users = users
 
-  $scope.userImages (user)->
+  $scope.userImages = (user)->
     # provided that user.id == 123
     # GET /api/users/123/images
-    # it will automatically be added to user.images after the response
-    user.images.$uget()
+    user.images.$uget().then (images)->
+      user.images = images
 
-  $scope.create (user)->
+  $scope.create = (user)->
     # PUT /api/users
     $scope.users.$post(user)
 
-  $scope.save (user)->
+  $scope.save = (user)->
     # provided that user.id == 123
     # PUT /api/users/123
     user.$put()
 
-  $scope.changePassword (user, password)->
+  $scope.changePassword = (user, password)->
     # provided that user.id == 123
     # PATCH /api/users/123
     user.$patch({password: password})
@@ -138,5 +138,10 @@ api.$get() # still sends X-AUTH-TOKEN: 123
 
 # note: $id creates a new restified object
 sameUser = users.$id(123)
-sameUser === user # false !!!
+user !== sameUser # true
+
+# note: every request data creates a new restified object
+user.$get.then(sameUser)->
+  user !== sameUser # true
+
 ````

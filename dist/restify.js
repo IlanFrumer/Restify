@@ -1,9 +1,3 @@
-/**
- *  Restify v0.1.4
- *  (c) 2013 Ilan Frumer
- *  License: MIT
- */
-
 (function() {
   var module, original;
 
@@ -121,12 +115,13 @@
           config = configFactory.call(this, 'GET');
           config.params = params;
           return RestifyPromise($http(config), function(data) {
-            var $id, $val, element, key, val, _ref;
+            var $id, $val, key, newElement, val, _ref;
             if (!toWrap) {
               return data;
             }
+            newElement = new Restify(_this.$$url, _this.$$route, _this.$$parent);
             if (_.isArray(data)) {
-              $id = 'id';
+              $id = void 0;
               $val = _this.$$route;
               _ref = _this.$$route;
               for (key in _ref) {
@@ -137,17 +132,17 @@
                   break;
                 }
               }
-              data = _.map(data, function(elm) {
-                var element, id;
-                id = elm[$id] != null ? "/" + elm[$id] : "";
-                element = new Restify("" + _this.$$url + id, $val, _this);
-                return _.extend(element, elm);
-              });
-              return _.extend(_this, data);
-            } else {
-              element = new Restify(_this.$$url, _this.$$route, _this);
-              return _.extend(element, data);
+              if (!angular.isUndefined($id)) {
+                data = _.map(data, function(elm) {
+                  if (angular.isUndefined(elm[$id])) {
+                    return elm;
+                  } else {
+                    return _.extend(new Restify("" + newElement.$$url + "/" + elm[$id], $val, newElement), elm);
+                  }
+                });
+              }
             }
+            return _.extend(newElement, data);
           });
         };
 

@@ -93,27 +93,29 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
         unless toWrap
           return data
 
+        newElement = new Restify(@$$url,@$$route,@$$parent)
+
         if _.isArray(data)
-          $id = 'id'
+
+          $id = undefined
           $val = @$$route
+          
           for key,val of @$$route
             if /^:/.test(key)
               $id = key.match(/^:(.+)/)[1]
               $val = val
               break
-          
-          data = _.map data, (elm)=>
-            
-            id = if elm[$id]? then "/#{elm[$id]}" else ""
-            element = new Restify("#{@$$url}#{id}", $val, this)
-            
-            _.extend(element, elm)
 
-          _.extend(this,data)
+          unless angular.isUndefined($id)
 
-        else
-          element = new Restify(@$$url, @$$route, this)
-          _.extend(element,data)        
+            data = _.map data, (elm)->
+
+              if angular.isUndefined(elm[$id])
+                return elm
+              else                                
+                return _.extend(new Restify("#{newElement.$$url}/#{elm[$id]}", $val, newElement), elm)
+
+        _.extend(newElement,data)
 
     $delete : () ->
       config = configFactory.call(this,'DELETE')
