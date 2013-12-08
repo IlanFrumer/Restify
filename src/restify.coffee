@@ -86,7 +86,7 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
     $get : (params = {}, toWrap = true)->
 
       config = configFactory.call(this,'GET')
-      config.params = params
+      config.params = params unless _.isEmpty(params)
         
       RestifyPromise $http(config), (data)=>
         

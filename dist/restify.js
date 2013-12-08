@@ -1,3 +1,9 @@
+/**
+ *  Restify v0.2.1
+ *  (c) 2013 Ilan Frumer
+ *  License: MIT
+ */
+
 (function() {
   var module, original;
 
@@ -113,7 +119,9 @@
             toWrap = true;
           }
           config = configFactory.call(this, 'GET');
-          config.params = params;
+          if (!_.isEmpty(params)) {
+            config.params = params;
+          }
           return RestifyPromise($http(config), function(data) {
             var $id, $val, key, newElement, val, _ref;
             if (!toWrap) {
