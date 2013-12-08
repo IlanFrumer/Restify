@@ -1,5 +1,5 @@
 /**
- *  Restify v0.1.3
+ *  Restify v0.1.4
  *  (c) 2013 Ilan Frumer
  *  License: MIT
  */
@@ -50,14 +50,14 @@
         config.transformRequest = function(config) {
           config = original.transformRequest(config);
           if (!angular.isUndefined(reqI)) {
-            reqI.$$requestInterceptor(config);
+            config = reqI.$$requestInterceptor(config);
           }
           return config || $q.when(config);
         };
         config.transformResponse = function(data, headers) {
           data = original.transformResponse(data, headers);
           if (!angular.isUndefined(resI)) {
-            resI.$$responseInterceptor(data, headers);
+            data = resI.$$responseInterceptor(data, headers);
           }
           return data || $q.when(data);
         };
@@ -70,7 +70,9 @@
         var deffered;
         deffered = $q.defer();
         promise.success(function(data, status, headers, config) {
-          data = restifyData(data);
+          if (!angular.isUndefined(restifyData)) {
+            data = restifyData(data);
+          }
           return deffered.resolve(data);
         });
         promise.error(function(data, status, headers, config) {
@@ -120,9 +122,6 @@
           config.params = params;
           return RestifyPromise($http(config), function(data) {
             var $id, $val, element, key, val, _ref;
-            if (data._embedded != null) {
-              data = data._embedded;
-            }
             if (!toWrap) {
               return data;
             }

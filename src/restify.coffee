@@ -1,5 +1,3 @@
-# hasBody = /^(POST|PUT|PATCH)$/i.test(action.method)
-
 module = angular.module('restify', [])
 
 original = {}
@@ -36,14 +34,14 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
     config.transformRequest = (config)->
       
       config = original.transformRequest(config)
-      reqI.$$requestInterceptor(config) unless angular.isUndefined(reqI)
+      config = reqI.$$requestInterceptor(config) unless angular.isUndefined(reqI)
 
       return config || $q.when(config)
 
     config.transformResponse = (data, headers)->
 
       data = original.transformResponse(data, headers)
-      resI.$$responseInterceptor(data,headers) unless angular.isUndefined(resI)
+      data = resI.$$responseInterceptor(data,headers) unless angular.isUndefined(resI)
 
       return data || $q.when(data)
 
@@ -56,15 +54,11 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
 
     promise.success (data, status, headers, config)->
 
-      # TODO: response interceptor
-
-      data = restifyData(data)
+      data = restifyData(data) unless angular.isUndefined(restifyData)
 
       deffered.resolve(data)
 
     promise.error (data, status, headers, config)->
-
-      # TODO: response error interceptor
 
       deffered.reject(data)
 
@@ -96,9 +90,6 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
         
       RestifyPromise $http(config), (data)=>
         
-        if data._embedded?
-          data = data._embedded
-
         unless toWrap
           return data
 
