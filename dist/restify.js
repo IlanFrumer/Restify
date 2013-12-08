@@ -5,7 +5,9 @@
 
   module.factory('restify', [
     '$http', '$q', function($http, $q) {
-      var Restify, RestifyPromise, configFactory, deRestify, uriToArray;
+      var Restify, RestifyPromise, configFactory, deRestify, originalTransformRequest, originalTransformResponse, uriToArray;
+      originalTransformRequest = $http.defaults.transformRequest[0];
+      originalTransformResponse = $http.defaults.transformResponse[0];
       uriToArray = function(uri) {
         return _.filter(uri.split('/'), function(a) {
           return a;
@@ -30,15 +32,25 @@
           tree.push(_this);
           _this = _this.$$parent;
         }
+        reqI = _.find(tree, '$$requestInterceptor');
+        resI = _.find(tree, '$$responseInterceptor');
+        config.transformRequest = function(config) {
+          config = originalTransformRequest(config);
+          if (!angular.isUndefined(reqI)) {
+            reqI.$$requestInterceptor(config);
+          }
+          return config || $q.when(config);
+        };
+        config.transformResponse = function(data, headers) {
+          data = originalTransformResponse(data, headers);
+          if (!angular.isUndefined(resI)) {
+            resI.$$responseInterceptor(data, headers);
+          }
+          return data || $q.when(data);
+        };
         config.headers = _.reduceRight(tree, (function(headers, obj) {
           return _.defaults(headers, obj.$$headers || {});
         }), {});
-        if (reqI = _.find(tree, '$$requestInterceptor')) {
-          config.transformRequest = reqI.$$requestInterceptor;
-        }
-        if (resI = _.find(tree, '$$responseInterceptor')) {
-          config.transformResponse = resI.$$responseInterceptor;
-        }
         return config;
       };
       RestifyPromise = function(promise, restifyData) {
@@ -75,26 +87,24 @@
           }
         }
 
-        Restify.prototype.$uget = function(conf) {
-          if (conf == null) {
-            conf = {};
+        Restify.prototype.$uget = function(params) {
+          if (params == null) {
+            params = {};
           }
-          return this.get(conf, false);
+          return this.get(params, false);
         };
 
-        Restify.prototype.$get = function(conf, toWrap) {
+        Restify.prototype.$get = function(params, toWrap) {
           var config,
             _this = this;
-          if (conf == null) {
-            conf = {};
+          if (params == null) {
+            params = {};
           }
           if (toWrap == null) {
             toWrap = true;
           }
           config = configFactory.call(this, 'GET');
-          if (!_.isUndefined(conf.params)) {
-            config.params = conf.params;
-          }
+          config.params = params;
           return RestifyPromise($http(config), function(data) {
             var $id, $val, element, key, val, _ref;
             if (data._embedded != null) {

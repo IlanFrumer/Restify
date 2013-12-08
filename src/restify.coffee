@@ -4,6 +4,9 @@ module = angular.module('restify', [])
 
 module.factory 'restify', ['$http','$q', ($http, $q)->
 
+  originalTransformRequest  = $http.defaults.transformRequest[0]
+  originalTransformResponse = $http.defaults.transformResponse[0]
+
   uriToArray = (uri)->
     _.filter(uri.split('/'),(a)-> a)
 
@@ -23,10 +26,24 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
       tree.push(_this)
       _this = _this.$$parent
 
+    reqI = _.find(tree,'$$requestInterceptor')
+    resI = _.find(tree,'$$responseInterceptor')
+
+    config.transformRequest = (config)->
+      
+      config = originalTransformRequest(config)
+      reqI.$$requestInterceptor(config) unless angular.isUndefined(reqI)
+
+      return config || $q.when(config)
+
+    config.transformResponse = (data, headers)->
+
+      data = originalTransformResponse(data, headers)
+      resI.$$responseInterceptor(data,headers) unless angular.isUndefined(resI)
+
+      return data || $q.when(data)
+
     config.headers = _.reduceRight tree, ((headers, obj)-> _.defaults(headers, obj.$$headers || {})),{}
-    config.transformRequest = reqI.$$requestInterceptor if reqI = _.find(tree,'$$requestInterceptor')
-    config.transformResponse = resI.$$responseInterceptor if resI = _.find(tree,'$$responseInterceptor')
-    
 
     return config
 
@@ -66,16 +83,15 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
         else
           @[key] = new Restify("#{base}/#{key}", val, this)
 
-    $uget : (conf = {})-> @get(conf, false)
+    $uget : (params = {})-> @get(params, false)
 
-    $get : (conf = {}, toWrap = true)->
+    $get : (params = {}, toWrap = true)->
+
       config = configFactory.call(this,'GET')
-
-      unless _.isUndefined(conf.params)
-        config.params = conf.params
-
+      config.params = params
+        
       RestifyPromise $http(config), (data)=>
-
+        
         if data._embedded?
           data = data._embedded
 
@@ -94,7 +110,6 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
           data = _.map data, (elm)=>
             
             id = if elm[$id]? then "/#{elm[$id]}" else ""
-
             element = new Restify("#{@$$url}#{id}", $val, this)
             
             _.extend(element, elm)
