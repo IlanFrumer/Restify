@@ -1,3 +1,9 @@
+/**
+ *  Restify v0.1.0
+ *  (c) 2013 Ilan Frumer
+ *  License: MIT
+ */
+
 (function() {
   var module;
 
