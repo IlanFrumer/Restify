@@ -7,24 +7,15 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
   uriToArray = (uri)->
     _.filter(uri.split('/'),(a)-> a)
 
-  deRestify = (object)->
-    _.omit (object) , (v,k)->
+  deRestify = (obj)->  
+    _.omit (obj) , (v,k)->
       /^\$/.test(k) || ( v && v.constructor.name == "Restify")
-
-    headers = @$$headers || {}
-
-    _this = this
-    while _this = _this.$$parent
-      headers = _.merge(_this.$$headers || {} , headers)
-    
-    return headers
-
 
   configFactory  = (method, data)->
     config = {}
     config.url = @$$url
     config.method = method
-    config.data = deRestify(data) unless angular.isUndefined(data)
+    config.data = angular.toJson(deRestify(data)) unless angular.isUndefined(data)
 
     # create parent tree
     tree = [] ; _this = this
@@ -32,9 +23,9 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
       tree.push(_this)
       _this = _this.$$parent
 
-    config.headers = _.reduceRight tree, ((headers, object)-> _.defaults(headers, object.$$headers || {})),{}
+    config.headers = _.reduceRight tree, ((headers, obj)-> _.defaults(headers, obj.$$headers || {})),{}
     config.transformRequest = reqI.$$requestInterceptor if reqI = _.find(tree,'$$requestInterceptor')
-    config.transformRequest = resI.$$responseInterceptor if resI = _.find(tree,'$$responseInterceptor')
+    config.transformResponse = resI.$$responseInterceptor if resI = _.find(tree,'$$responseInterceptor')
     
 
     return config
@@ -119,15 +110,15 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
       RestifyPromise $http(config)
 
     $post : (data) ->
-      config = configFactory.call(this,'POST',this || data)
+      config = configFactory.call(this,'POST',data || this)
       RestifyPromise $http(config)
 
     $put  : (data) ->
-      config = configFactory.call(this,'PUT',this || data)
+      config = configFactory.call(this,'PUT',data || this)
       RestifyPromise $http(config)
 
     $patch: (data) ->
-      config = configFactory.call(this,'PATCH',this || data)
+      config = configFactory.call(this,'PATCH',data || this)
       RestifyPromise $http(config)      
 
     $setHeaders: (headers)->

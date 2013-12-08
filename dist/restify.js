@@ -1,9 +1,3 @@
-/**
- *  Restify v0.1.0
- *  (c) 2013 Ilan Frumer
- *  License: MIT
- */
-
 (function() {
   var module;
 
@@ -17,17 +11,10 @@
           return a;
         });
       };
-      deRestify = function(object) {
-        var headers, _this;
-        _.omit(object, function(v, k) {
+      deRestify = function(obj) {
+        return _.omit(obj, function(v, k) {
           return /^\$/.test(k) || (v && v.constructor.name === "Restify");
         });
-        headers = this.$$headers || {};
-        _this = this;
-        while (_this = _this.$$parent) {
-          headers = _.merge(_this.$$headers || {}, headers);
-        }
-        return headers;
       };
       configFactory = function(method, data) {
         var config, reqI, resI, tree, _this;
@@ -35,7 +22,7 @@
         config.url = this.$$url;
         config.method = method;
         if (!angular.isUndefined(data)) {
-          config.data = deRestify(data);
+          config.data = angular.toJson(deRestify(data));
         }
         tree = [];
         _this = this;
@@ -43,14 +30,14 @@
           tree.push(_this);
           _this = _this.$$parent;
         }
-        config.headers = _.reduceRight(tree, (function(headers, object) {
-          return _.defaults(headers, object.$$headers || {});
+        config.headers = _.reduceRight(tree, (function(headers, obj) {
+          return _.defaults(headers, obj.$$headers || {});
         }), {});
         if (reqI = _.find(tree, '$$requestInterceptor')) {
           config.transformRequest = reqI.$$requestInterceptor;
         }
         if (resI = _.find(tree, '$$responseInterceptor')) {
-          config.transformRequest = resI.$$responseInterceptor;
+          config.transformResponse = resI.$$responseInterceptor;
         }
         return config;
       };
@@ -150,19 +137,19 @@
 
         Restify.prototype.$post = function(data) {
           var config;
-          config = configFactory.call(this, 'POST', this || data);
+          config = configFactory.call(this, 'POST', data || this);
           return RestifyPromise($http(config));
         };
 
         Restify.prototype.$put = function(data) {
           var config;
-          config = configFactory.call(this, 'PUT', this || data);
+          config = configFactory.call(this, 'PUT', data || this);
           return RestifyPromise($http(config));
         };
 
         Restify.prototype.$patch = function(data) {
           var config;
-          config = configFactory.call(this, 'PATCH', this || data);
+          config = configFactory.call(this, 'PATCH', data || this);
           return RestifyPromise($http(config));
         };
 
