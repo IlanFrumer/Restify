@@ -5,14 +5,16 @@
  */
 
 (function() {
-  var module;
+  var module, original;
 
   module = angular.module('restify', []);
 
+  original = {};
+
   module.config([
     '$httpProvider', function($httpProvider) {
-      data.transformRequest = $httpProvider.defaults.transformRequest[0];
-      return data.transformResponse = $httpProvider.defaults.transformResponse[0];
+      original.transformRequest = $httpProvider.defaults.transformRequest[0];
+      return original.transformResponse = $httpProvider.defaults.transformResponse[0];
     }
   ]);
 
@@ -46,14 +48,14 @@
         reqI = _.find(tree, '$$requestInterceptor');
         resI = _.find(tree, '$$responseInterceptor');
         config.transformRequest = function(config) {
-          config = data.transformRequest(config);
+          config = original.transformRequest(config);
           if (!angular.isUndefined(reqI)) {
             config = reqI.$$requestInterceptor(config);
           }
           return config || $q.when(config);
         };
         config.transformResponse = function(data, headers) {
-          data = data.transformResponse(data, headers);
+          data = original.transformResponse(data, headers);
           if (!angular.isUndefined(resI)) {
             data = resI.$$responseInterceptor(data, headers);
           }
@@ -201,7 +203,6 @@
         return Restify;
 
       })();
-      data.classname = Restify.name;
       return function(baseUrl, callback) {
         var base, configuerer;
         baseUrl = '/' + uriToArray(baseUrl).join('/');
