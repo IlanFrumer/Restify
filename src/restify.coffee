@@ -1,20 +1,22 @@
 module = angular.module('restify', [])
 
-original = {}
-
 module.config ['$httpProvider', ($httpProvider)->
-  original.transformRequest  = $httpProvider.defaults.transformRequest[0]
-  original.transformResponse = $httpProvider.defaults.transformResponse[0]
+  data.transformRequest  = $httpProvider.defaults.transformRequest[0]
+  data.transformResponse = $httpProvider.defaults.transformResponse[0]
 ]
 
 module.factory 'restify', ['$http','$q', ($http, $q)->
+
+  ## helpers
 
   uriToArray = (uri)->
     _.filter(uri.split('/'),(a)-> a)
 
   deRestify = (obj)->  
     _.omit (obj) , (v,k)->
-      /^\$/.test(k) || ( v && v.constructor.name == "Restify")
+      /^\$/.test(k) || ( v && v instanceof Restify)
+
+  ## configuration factory
 
   configFactory  = (method, data)->
     config = {}
@@ -33,14 +35,14 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
 
     config.transformRequest = (config)->
       
-      config = original.transformRequest(config)
+      config = data.transformRequest(config)
       config = reqI.$$requestInterceptor(config) unless angular.isUndefined(reqI)
 
       return config || $q.when(config)
 
     config.transformResponse = (data, headers)->
 
-      data = original.transformResponse(data, headers)
+      data = data.transformResponse(data, headers)
       data = resI.$$responseInterceptor(data,headers) unless angular.isUndefined(resI)
 
       return data || $q.when(data)
@@ -49,6 +51,8 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
 
     return config
 
+  ## promise wrapper
+  
   RestifyPromise = (promise, restifyData)->
     deffered = $q.defer()
 
@@ -64,6 +68,8 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
 
     deffered.promise
 
+  ## class
+
   class Restify
 
     constructor: (base, route, parent)->
@@ -76,7 +82,7 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
         base = "" if base == "/"
         if /^:/.test(key)
           $id = key.match(/^:(.+)/)[1]
-          @["$#{$id}"] = (id)->            
+          @["$#{$id}"] = (id)->
             new Restify("#{base}/#{id}", val, this)
         else
           @[key] = new Restify("#{base}/#{key}", val, this)
@@ -87,7 +93,7 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
 
       config = configFactory.call(this,'GET')
       config.params = params unless _.isEmpty(params)
-        
+
       RestifyPromise $http(config), (data)=>
         
         unless toWrap
@@ -112,7 +118,7 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
 
               if angular.isUndefined(elm[$id])
                 return elm
-              else                                
+              else
                 return _.extend(new Restify("#{newElement.$$url}/#{elm[$id]}", $val, newElement), elm)
 
         _.extend(newElement,data)
@@ -149,6 +155,9 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
       @$$requestInterceptor = callback
       return this
 
+  data.classname = Restify.name
+
+  ## factory
 
   return (baseUrl, callback)->
 

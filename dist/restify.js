@@ -1,20 +1,18 @@
 /**
- *  Restify v0.2.1
+ *  Restify v0.2.2
  *  (c) 2013 Ilan Frumer
  *  License: MIT
  */
 
 (function() {
-  var module, original;
+  var module;
 
   module = angular.module('restify', []);
 
-  original = {};
-
   module.config([
     '$httpProvider', function($httpProvider) {
-      original.transformRequest = $httpProvider.defaults.transformRequest[0];
-      return original.transformResponse = $httpProvider.defaults.transformResponse[0];
+      data.transformRequest = $httpProvider.defaults.transformRequest[0];
+      return data.transformResponse = $httpProvider.defaults.transformResponse[0];
     }
   ]);
 
@@ -28,7 +26,7 @@
       };
       deRestify = function(obj) {
         return _.omit(obj, function(v, k) {
-          return /^\$/.test(k) || (v && v.constructor.name === "Restify");
+          return /^\$/.test(k) || (v && v instanceof Restify);
         });
       };
       configFactory = function(method, data) {
@@ -48,14 +46,14 @@
         reqI = _.find(tree, '$$requestInterceptor');
         resI = _.find(tree, '$$responseInterceptor');
         config.transformRequest = function(config) {
-          config = original.transformRequest(config);
+          config = data.transformRequest(config);
           if (!angular.isUndefined(reqI)) {
             config = reqI.$$requestInterceptor(config);
           }
           return config || $q.when(config);
         };
         config.transformResponse = function(data, headers) {
-          data = original.transformResponse(data, headers);
+          data = data.transformResponse(data, headers);
           if (!angular.isUndefined(resI)) {
             data = resI.$$responseInterceptor(data, headers);
           }
@@ -203,6 +201,7 @@
         return Restify;
 
       })();
+      data.classname = Restify.name;
       return function(baseUrl, callback) {
         var base, configuerer;
         baseUrl = '/' + uriToArray(baseUrl).join('/');
