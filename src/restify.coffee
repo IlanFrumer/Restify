@@ -1,8 +1,10 @@
 module = angular.module('restify', [])
 
+original = {}
+
 module.config ['$httpProvider', ($httpProvider)->
-  data.transformRequest  = $httpProvider.defaults.transformRequest[0]
-  data.transformResponse = $httpProvider.defaults.transformResponse[0]
+  original.transformRequest  = $httpProvider.defaults.transformRequest[0]
+  original.transformResponse = $httpProvider.defaults.transformResponse[0]
 ]
 
 module.factory 'restify', ['$http','$q', ($http, $q)->
@@ -35,14 +37,14 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
 
     config.transformRequest = (config)->
       
-      config = data.transformRequest(config)
+      config = original.transformRequest(config)
       config = reqI.$$requestInterceptor(config) unless angular.isUndefined(reqI)
 
       return config || $q.when(config)
 
     config.transformResponse = (data, headers)->
 
-      data = data.transformResponse(data, headers)
+      data = original.transformResponse(data, headers)
       data = resI.$$responseInterceptor(data,headers) unless angular.isUndefined(resI)
 
       return data || $q.when(data)
