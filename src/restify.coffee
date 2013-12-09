@@ -155,8 +155,6 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
       @$$requestInterceptor = callback
       return this
 
-  data.classname = Restify.name
-
   ## factory
 
   return (baseUrl, callback)->
