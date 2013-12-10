@@ -4,7 +4,7 @@ Restful factory for AngularJS.
 ### Install
 
 - `bower install restify`
-- `<script src="bower_components/restify/dist/resrify.min.js">`
+- `<script src="bower_components/restify/dist/restify.min.js">`
 
 ### Dependencies
 
@@ -21,7 +21,7 @@ app = angular.module('yourModule',['restify'])
 # note: you should probably create one service for the whole api
 #       and then pass it all over the place
 
-app.factory 'API', ['restify',(resrify)->
+app.factory 'API', ['restify',(restify)->
   
   # restify 
   # gets a base url and a configuration block
