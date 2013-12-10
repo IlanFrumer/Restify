@@ -1,8 +1,9 @@
-/**
- *  Restify v0.2.2
- *  (c) 2013 Ilan Frumer
- *  License: MIT
- */
+/*
+ * Restify v0.2.4
+ * (c) 2013 Ilan Frumer
+ * License: MIT
+*/
+
 
 (function() {
   var module, original;
@@ -230,3 +231,7 @@
   ]);
 
 }).call(this);
+
+/*
+//@ sourceMappingURL=restify.js.map
+*/

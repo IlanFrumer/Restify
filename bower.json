@@ -1,8 +1,12 @@
 {
   "name": "restify",
   "description": "Restful factory for AngularJS",
-  "version": "0.2.2",
-  "ignore": [],
+  "version": "0.2.4",
+  "ignore": [
+    ".*",
+    "src",
+    "Gruntfile.coffee"
+  ],
   "dependencies": {
     "angular": "*",
     "lodash": "~2.4.1"
@@ -16,10 +20,5 @@
     "rest",
     "coffeescript",
     "library"
-  ],
-  "ignore": [
-    ".*",
-    "src",
-    "Gruntfile.coffee"
-  ]  
+  ]
 }
