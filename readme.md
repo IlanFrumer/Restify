@@ -14,7 +14,7 @@ Restful factory for AngularJS.
 ### Example
 
 ```coffee
-# declare resify as a dependency of your application module
+# declare restify as a dependency of your application module
 app = angular.module('yourModule',['restify'])
 
 # create a service by injecting restify and using its factory function
@@ -105,8 +105,8 @@ Owned properties are ment to be used internally, don't mess with them!
 
 #### Methods (_All inherited methods are prefixed with $_)
 
-* **$get()**: getting the response and restifing it
-* **$uget()**: getting the response without restifing it
+* **$get()**: getting the response and restifying it
+* **$uget()**: getting the response without restifying it
 * **$delete()**: 
 * **$post([data])**: If data is not provided then this object is sent stripped from functions or Restified objects.
 * **$patch([data])**: If data is not provided then this object is sent stripped from functions or Restified objects.
@@ -120,7 +120,7 @@ Configuration methods(_see below_)
 
 ### Configartion
 
-All restified object inherits configuration from it's parent chain and may override it
+All restified object inherits configuration from its parent chain and may override it
 
 ````coffee
 # parent chain: api > users > user
