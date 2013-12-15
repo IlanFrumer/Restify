@@ -6,7 +6,9 @@
 
 
 (function() {
-  var module, original;
+  var module, original,
+    __hasProp = {}.hasOwnProperty,
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   module = angular.module('restify', []);
 
@@ -81,7 +83,9 @@
         });
         return deffered.promise;
       };
-      Restify = (function() {
+      Restify = (function(_super) {
+        __extends(Restify, _super);
+
         function Restify(base, route, parent) {
           var $id, key, val;
           this.$$url = base;
@@ -107,7 +111,7 @@
           if (params == null) {
             params = {};
           }
-          return this.get(params, false);
+          return this.$get(params, false);
         };
 
         Restify.prototype.$get = function(params, toWrap) {
@@ -150,8 +154,11 @@
                   }
                 });
               }
+              newElement.push.apply(newElement, data);
+            } else {
+              newElement = _.extend(newElement, data);
             }
-            return _.extend(newElement, data);
+            return newElement;
           });
         };
 
@@ -203,7 +210,7 @@
 
         return Restify;
 
-      })();
+      })(Array);
       return function(baseUrl, callback) {
         var base, configuerer;
         baseUrl = '/' + uriToArray(baseUrl).join('/');

@@ -12,14 +12,34 @@ describe 'Restify', ()->
     api = _restify_ '/api' , (conf)->
       conf.add('/users/:id/images/:id')
 
-    $httpBackend.whenGET('/api').respond([1])
-    $httpBackend.whenGET('/api/users').respond([1])
-    $httpBackend.whenGET('/api/users/1').respond([1])
+
+    users = [
+      id: 1
+      firstname: 'ilan'
+      lastname: 'frumer'
+    ,
+      id: 2
+      firstname: 'john'
+      lastname: 'doe'
+    ,
+      id: 3
+      firstname: 'mark'
+      lastname: 'twain'
+    ,
+      id: 4
+      firstname: 'linus'
+      lastname: 'torvalds'
+    ]
+
+    $httpBackend.whenGET('/api').respond([])
+    $httpBackend.whenGET('/api/users').respond(users)
+    $httpBackend.whenGET('/api/users/1').respond(_.find(users,(u)-> u.id == 1))
     $httpBackend.whenGET('/api/users/1/images').respond([1])
 
-  afterEach ->
-    $httpBackend.verifyNoOutstandingExpectation()
-    $httpBackend.verifyNoOutstandingRequest()
+    $httpBackend.whenPOST('/api/users').respond (method, url, data, headers)-> [201, "", ""]
+
+    for method in ['PATCH','DELETE','PUT']
+      $httpBackend.when(method,'/api/users/1').respond (method, url, data, headers)-> [200, "", ""]
 
   it 'Should create api object properly', ->
     
@@ -44,31 +64,74 @@ describe 'Restify', ()->
     expect(user.images.$$parent).toEqual(user)
 
   it 'Should create different object for each call' , ->
-    expect(api.users.$id(1).images.$$parent).not.toEqual(api.users.$id(1))
+    expect(api.users.$id(1).images.$$parent).not.toBe(api.users.$id(1))
 
 
-  it 'Should make get requests', ->
-    $httpBackend.expectGET('/api')
-    $httpBackend.expectGET('/api/users')
-    $httpBackend.expectGET('/api/users/1')
-    $httpBackend.expectGET('/api/users/1/images')
-    
-    api.$get()
-    api.users.$get()
-    api.users.$id(1).$get()
-    api.users.$id(1).images.$get()
+  describe '$httpBackend.flush', ->
+        
+    afterEach ->
+      $httpBackend.flush()
+      $httpBackend.verifyNoOutstandingExpectation()
+      $httpBackend.verifyNoOutstandingRequest()
 
-    $httpBackend.flush()
 
-  it 'Should make get requests', ->
-    $httpBackend.expectGET('/api')
-    $httpBackend.expectGET('/api/users')
-    $httpBackend.expectGET('/api/users/1')
-    $httpBackend.expectGET('/api/users/1/images')
-    
-    api.$get()
-    api.users.$get()
-    api.users.$id(1).$get()
-    api.users.$id(1).images.$get()
+    it 'Should make get requests', ->
+      $httpBackend.expectGET('/api')
+      $httpBackend.expectGET('/api/users')
+      $httpBackend.expectGET('/api/users/1')
+      $httpBackend.expectGET('/api/users/1/images')
+      
+      api.$get()
+      api.users.$get()
+      api.users.$id(1).$get()
+      api.users.$id(1).images.$get()
 
-    $httpBackend.flush()
+    it 'Should make post requests', ->
+      $httpBackend.expectPOST('/api/users')
+      api.users.$post()
+
+    it 'Should make patch/put/delete requests', ->
+      $httpBackend.expectPUT('/api/users/1')
+      $httpBackend.expectDELETE('/api/users/1')
+      $httpBackend.expectPATCH('/api/users/1')
+
+      api.users.$id(1).$put()
+      api.users.$id(1).$delete()
+      api.users.$id(1).$patch()
+
+
+    it 'Should get restified responses', ->
+
+      api.users.$get().then (users)->
+        expect(users.length).toEqual(4)
+        expect(users.$$url).toEqual('/api/users')
+        expect(users[0].$$url).toEqual('/api/users/1')
+        expect(users[0].firstname).toEqual('ilan')
+        expect(users[0].lastname).toEqual('frumer')        
+        expect(users[0].images.$$url).toEqual('/api/users/1/images')
+
+      api.users.$id(1).$get().then (user)->
+        expect(user.length).toEqual(0) # should extend the object rather than pushing to it...
+        expect(user.$$url).toEqual('/api/users/1')
+        expect(user.id).toEqual(1)
+        expect(user.firstname).toEqual('ilan')
+        expect(user.lastname).toEqual('frumer')        
+        expect(user.images.$$url).toEqual('/api/users/1/images')
+                
+    it 'Should get unrestified responses', ->
+
+      api.users.$uget().then (users)->
+        expect(users.length).toEqual(4)
+        expect(users.$$url).toBeUndefined()
+        expect(users[0].$$url).toBeUndefined()
+        expect(users[0].firstname).toEqual('ilan')
+        expect(users[0].lastname).toEqual('frumer')        
+        expect(users[0].images).toBeUndefined()
+
+      api.users.$id(1).$uget().then (user)->
+        expect(user.length).toBeUndefined()
+        expect(user.$$url).toBeUndefined()
+        expect(user.id).toEqual(1)
+        expect(user.firstname).toEqual('ilan')
+        expect(user.lastname).toEqual('frumer')        
+        expect(user.images).toBeUndefined()

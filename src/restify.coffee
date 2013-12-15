@@ -80,7 +80,7 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
 
   ## class
 
-  class Restify
+  class Restify extends Array
 
     constructor: (base, route, parent)->
 
@@ -97,7 +97,7 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
         else
           @[key] = new Restify("#{base}/#{key}", val, this)
 
-    $uget : (params = {})-> @get(params, false)
+    $uget : (params = {})-> @$get(params, false)
 
     $get : (params = {}, toWrap = true)->
 
@@ -114,7 +114,7 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
         if _.isArray(data)
 
           $id = undefined
-          $val = @$$route
+          $val = @$$route          
           
           for key,val of @$$route
             if /^:/.test(key)
@@ -131,7 +131,11 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
               else
                 return _.extend(new Restify("#{newElement.$$url}/#{elm[$id]}", $val, newElement), elm)
 
-        _.extend(newElement,data)
+          newElement.push(data...)
+        else
+          newElement = _.extend(newElement, data)
+          
+        return newElement
 
     $delete : () ->
       config = configFactory.call(this,'DELETE')
@@ -147,7 +151,7 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
 
     $patch: (data) ->
       config = configFactory.call(this,'PATCH',data || this)
-      RestifyPromise $http(config)      
+      RestifyPromise $http(config)
 
     $setHeaders: (headers)->
       @$$headers = {} if angular.isUndefined(@$$headers)
