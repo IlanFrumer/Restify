@@ -3,6 +3,7 @@ module.exports = (grunt)->
   grunt.loadNpmTasks 'grunt-contrib-coffee'
   grunt.loadNpmTasks 'grunt-contrib-uglify'
   grunt.loadNpmTasks 'grunt-contrib-watch'
+  grunt.loadNpmTasks 'grunt-karma'
 
   grunt.loadTasks 'tasks'
 
@@ -11,6 +12,18 @@ module.exports = (grunt)->
     configure:
       options:
         version: "0.2.4"
+
+    karma:
+      options:
+        configFile: 'karma.conf.coffee'
+
+      travis:
+        singleRun: true
+        autoWatch: false
+        browsers: ['PhantomJS']
+
+      dev:
+        autoWatch: true
 
     coffee:
       compile:

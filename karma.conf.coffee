@@ -15,8 +15,8 @@ module.exports = (config) ->
     
     # list of files / patterns to load in the browser
     files: [
-        "http://ajax.googleapis.com/ajax/libs/angularjs/1.2.4/angular.js"
-        "http://ajax.googleapis.com/ajax/libs/angularjs/1.2.4/angular-mocks.js"
+        "http://ajax.googleapis.com/ajax/libs/angularjs/1.2.5/angular.js"
+        "http://ajax.googleapis.com/ajax/libs/angularjs/1.2.5/angular-mocks.js"
         "http://cdnjs.cloudflare.com/ajax/libs/lodash.js/2.4.1/lodash.min.js"
         'src/*.coffee'
         'test/*.coffee'
