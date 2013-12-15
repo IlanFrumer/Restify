@@ -4,6 +4,8 @@
  * License: MIT
 ###
 
+
+# Declare module
 module = angular.module('restify', [])
 
 original = {}
@@ -175,7 +177,7 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
 
         route = uriToArray(route)
       
-        fetch = (base, route)->
+        mergeRoutes = (base, route)->
 
           unless _.isEmpty(route)
 
@@ -184,9 +186,9 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
 
             base[name] = base[name] || {}
 
-            fetch(base[name], next)
+            mergeRoutes(base[name], next)
 
-        fetch(base, route, [])
+        mergeRoutes(base, route, [])
 
     callback(configuerer)
 
