@@ -1,5 +1,5 @@
 /*
- * Restify v0.2.4
+ * Restify v0.2.5
  * (c) 2013 Ilan Frumer
  * License: MIT
 */
@@ -210,18 +210,18 @@
         base = {};
         configuerer = {
           add: function(route) {
-            var fetch;
+            var mergeRoutes;
             route = uriToArray(route);
-            fetch = function(base, route) {
+            mergeRoutes = function(base, route) {
               var name, next;
               if (!_.isEmpty(route)) {
                 name = route[0];
                 next = route.slice(1);
                 base[name] = base[name] || {};
-                return fetch(base[name], next);
+                return mergeRoutes(base[name], next);
               }
             };
-            return fetch(base, route, []);
+            return mergeRoutes(base, route, []);
           }
         };
         callback(configuerer);

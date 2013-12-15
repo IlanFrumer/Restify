@@ -11,19 +11,19 @@ module.exports = (grunt)->
 
     configure:
       options:
-        version: "0.2.4"
+        version: "0.2.5"
 
     karma:
       options:
         configFile: 'karma.conf.coffee'
+        autoWatch: false
 
       travis:
         singleRun: true
-        autoWatch: false
         browsers: ['PhantomJS']
 
-      dev:
-        autoWatch: true
+      unit:
+        background: true
 
     coffee:
       compile:
@@ -48,8 +48,14 @@ module.exports = (grunt)->
         files: 'dist/restify.js'
         tasks: ['uglify:dist']
 
+      karma:
+        files: 'test/restifySpec.coffee'
+        tasks: ['karma:unit:run']
+
+
   grunt.registerTask 'default', [
     'configure'
+    'karma:unit:start'
     'coffee:compile'
     'uglify:dist'
     'watch'
@@ -57,6 +63,7 @@ module.exports = (grunt)->
 
   grunt.registerTask 'build', [
     'configure'
+    'karma:travis'
     'coffee:compile'
     'uglify:dist'
   ]  
