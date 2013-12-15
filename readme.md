@@ -1,6 +1,8 @@
 # [Restify](https://github.com/IlanFrumer/Restify)
 Restful factory for AngularJS.
 
+[![Build Status](https://travis-ci.org/IlanFrumer/Restify.png?branch=master)](https://travis-ci.org/IlanFrumer/Restify)
+
 ### Install
 
 - `bower install restify`
