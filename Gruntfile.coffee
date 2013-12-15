@@ -11,7 +11,7 @@ module.exports = (grunt)->
 
     configure:
       options:
-        version: "0.2.5"
+        version: "0.2.6"
 
     karma:
       options:
