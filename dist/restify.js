@@ -55,7 +55,7 @@
             });
           }
           newElement.push.apply(newElement, data);
-        } else if (__.isObject(data)) {
+        } else if (_.isObject(data)) {
           if ($id && data[$id]) {
             newElement = new Restify("" + this.$$url + "/" + data[$id], this.$$route, this);
           } else {

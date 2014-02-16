@@ -52,7 +52,7 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
 
       newElement.push(data...)
 
-    else if __.isObject(data)
+    else if _.isObject(data)
       
       if ($id && data[$id])
         newElement = new Restify("#{@$$url}/#{data[$id]}",@$$route, this)                
