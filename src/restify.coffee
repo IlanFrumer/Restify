@@ -126,7 +126,7 @@ module.factory 'restify', ['$window','$http','$q', ($window, $http, $q)->
 
     match = baseUrl.match(/^(https?\:\/\/)?(.+)/) || []
 
-    baseUrl = (match[1] || '') + uriToArray(match[2] || '').join('/')
+    baseUrl = (match[1] || '/') + uriToArray(match[2] || '').join('/')
 
     base = {}
 

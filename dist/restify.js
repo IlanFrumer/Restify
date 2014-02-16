@@ -210,7 +210,7 @@
       return function(baseUrl, callback) {
         var base, configuerer, match;
         match = baseUrl.match(/^(https?\:\/\/)?(.+)/) || [];
-        baseUrl = (match[1] || '') + uriToArray(match[2] || '').join('/');
+        baseUrl = (match[1] || '/') + uriToArray(match[2] || '').join('/');
         base = {};
         configuerer = {
           add: function(route) {
