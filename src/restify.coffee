@@ -1,5 +1,5 @@
 ###
- * Restify v0.2.6
+ * Restify v0.3.0
  * (c) 2013 Ilan Frumer
  * License: MIT
 ###
@@ -27,31 +27,43 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
 
   restify = (data)->
 
-    newElement = new Restify(@$$url,@$$route,@$$parent)
+    newElement = null
+    $id = null
+    $route = @$$route          
+    
+    for key,val of @$$route
+      if /^:/.test(key)
+        $id = key.match(/^:(.+)/)[1]
+        $route = val
+        break
 
     if _.isArray(data)
 
-      $id = undefined
-      $val = @$$route          
-      
-      for key,val of @$$route
-        if /^:/.test(key)
-          $id = key.match(/^:(.+)/)[1]
-          $val = val
-          break
+      newElement = new Restify(@$$url,@$$route,@$$parent)
 
       if angular.isDefined($id)
 
-        data = _.map data, (elm)->
+        data = _.map data, (item)->
 
-          if angular.isUndefined(elm[$id])
-            return elm
+          if (item[$id])
+            return item
           else
-            return _.extend(new Restify("#{newElement.$$url}/#{elm[$id]}", $val, newElement), elm)
+            return _.extend(new Restify("#{@$$url}/#{item[$id]}", $route, newElement), item)
 
       newElement.push(data...)
-    else
+
+    else if __.isObject(data)
+      
+      if ($id && data[$id])
+        newElement = new Restify("#{@$$url}/#{data[$id]}",@$$route, this)                
+      else
+        newElement = new Restify(@$$url, @$$route, @$$parent)
+
       newElement = _.extend(newElement, data)
+
+    else
+      newElement = new Restify(@$$url, @$$route, @$$parent)
+      newElement.data = data      
       
     return newElement
 

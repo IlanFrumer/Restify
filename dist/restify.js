@@ -1,9 +1,9 @@
+
 /*
- * Restify v0.2.6
+ * Restify v0.3.0
  * (c) 2013 Ilan Frumer
  * License: MIT
-*/
-
+ */
 
 (function() {
   var module, original,
@@ -30,32 +30,41 @@
         });
       };
       restify = function(data) {
-        var $id, $val, key, newElement, val, _ref;
-        newElement = new Restify(this.$$url, this.$$route, this.$$parent);
-        if (_.isArray(data)) {
-          $id = void 0;
-          $val = this.$$route;
-          _ref = this.$$route;
-          for (key in _ref) {
-            val = _ref[key];
-            if (/^:/.test(key)) {
-              $id = key.match(/^:(.+)/)[1];
-              $val = val;
-              break;
-            }
+        var $id, $route, key, newElement, val, _ref;
+        newElement = null;
+        $id = null;
+        $route = this.$$route;
+        _ref = this.$$route;
+        for (key in _ref) {
+          val = _ref[key];
+          if (/^:/.test(key)) {
+            $id = key.match(/^:(.+)/)[1];
+            $route = val;
+            break;
           }
+        }
+        if (_.isArray(data)) {
+          newElement = new Restify(this.$$url, this.$$route, this.$$parent);
           if (angular.isDefined($id)) {
-            data = _.map(data, function(elm) {
-              if (angular.isUndefined(elm[$id])) {
-                return elm;
+            data = _.map(data, function(item) {
+              if (item[$id]) {
+                return item;
               } else {
-                return _.extend(new Restify("" + newElement.$$url + "/" + elm[$id], $val, newElement), elm);
+                return _.extend(new Restify("" + this.$$url + "/" + item[$id], $route, newElement), item);
               }
             });
           }
           newElement.push.apply(newElement, data);
-        } else {
+        } else if (__.isObject(data)) {
+          if ($id && data[$id]) {
+            newElement = new Restify("" + this.$$url + "/" + data[$id], this.$$route, this);
+          } else {
+            newElement = new Restify(this.$$url, this.$$route, this.$$parent);
+          }
           newElement = _.extend(newElement, data);
+        } else {
+          newElement = new Restify(this.$$url, this.$$route, this.$$parent);
+          newElement.data = data;
         }
         return newElement;
       };
@@ -92,8 +101,7 @@
         }
 
         Restify.prototype.$req = function(config, wrap) {
-          var conf,
-            _this = this;
+          var conf;
           if (wrap == null) {
             wrap = true;
           }
@@ -107,12 +115,14 @@
           if (_.isEmpty(conf.params)) {
             delete conf.params;
           }
-          return $http(conf).then(function(response) {
-            if (wrap) {
-              response.data = restify.call(_this, response.data);
-            }
-            return response.data;
-          });
+          return $http(conf).then((function(_this) {
+            return function(response) {
+              if (wrap) {
+                response.data = restify.call(_this, response.data);
+              }
+              return response.data;
+            };
+          })(this));
         };
 
         Restify.prototype.$ureq = function(config) {
@@ -229,6 +239,4 @@
 
 }).call(this);
 
-/*
-//@ sourceMappingURL=restify.js.map
-*/
+//# sourceMappingURL=restify.js.map
