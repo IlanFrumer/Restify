@@ -46,7 +46,7 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
         data = _.map data, (item)->
 
           if (item[$id])
-            return _.extend(new Restify("#{@$$url}/#{item[$id]}", $route, newElement), item)
+            return _.extend(new Restify("#{newElement.$$url}/#{item[$id]}", $route, newElement), item)
           else
             return item
 
