@@ -22,15 +22,8 @@
   ]);
 
   module.factory('restify', [
-    '$window', '$http', '$q', function($window, $http, $q) {
-      var Restify, deRestify, restify, toString, uriToArray;
-      toString = $window.toString;
-      $window.toString = function() {
-        if (this instanceof Restify) {
-          return '[object Array]';
-        }
-        return toString.call(this);
-      };
+    '$http', '$q', function($http, $q) {
+      var Restify, deRestify, restify, uriToArray;
       uriToArray = function(uri) {
         return _.filter(uri.split('/'), function(a) {
           return a;

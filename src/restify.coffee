@@ -16,13 +16,7 @@ module.config ['$httpProvider', ($httpProvider)->
 
 ]
 
-module.factory 'restify', ['$window','$http','$q', ($window, $http, $q)->
-
-  ## monkey-patching toString
-  toString = $window.toString
-  $window.toString = ()->
-    return '[object Array]' if(this instanceof Restify)
-    toString.call(this)
+module.factory 'restify', ['$http','$q', ($http, $q)->
 
   ## helpers
 
