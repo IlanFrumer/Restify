@@ -123,7 +123,7 @@
         };
 
         Restify.prototype.$ureq = function(config) {
-          return this.req(config, false);
+          return this.$req(config, false);
         };
 
         Restify.prototype.$uget = function(params) {
