@@ -41,7 +41,7 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
 
       newElement = new Restify(@$$url,@$$route,@$$parent)
 
-      if angular.isDefined($id)
+      if($id)
 
         data = _.map data, (item)->
 
