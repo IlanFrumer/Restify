@@ -103,7 +103,7 @@ module.factory 'restify', ['$window','$http','$q', ($window, $http, $q)->
         response.data = restify.call(this, response.data) if wrap
         return response.data
 
-    $ureq: (config)-> @req(config, false)
+    $ureq: (config)-> @$req(config, false)
 
     $uget : (params = {})-> @$ureq({method: 'GET' , params: params});
     $get : (params = {})-> @$req({method: 'GET' , params: params});
