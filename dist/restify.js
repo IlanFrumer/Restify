@@ -45,7 +45,7 @@
         }
         if (_.isArray(data)) {
           newElement = new Restify(this.$$url, this.$$route, this.$$parent);
-          if (angular.isDefined($id)) {
+          if ($id) {
             data = _.map(data, function(item) {
               if (item[$id]) {
                 return item;
