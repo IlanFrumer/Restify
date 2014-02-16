@@ -48,9 +48,9 @@
           if ($id) {
             data = _.map(data, function(item) {
               if (item[$id]) {
-                return item;
-              } else {
                 return _.extend(new Restify("" + this.$$url + "/" + item[$id], $route, newElement), item);
+              } else {
+                return item;
               }
             });
           }
