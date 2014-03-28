@@ -29,39 +29,46 @@
           return a;
         });
       };
-      restify = function(data) {
+      restify = function(data, wrap) {
         var $id, $route, key, newElement, val, _ref;
         newElement = null;
-        $id = null;
-        $route = this.$$route;
-        _ref = this.$$route;
-        for (key in _ref) {
-          val = _ref[key];
-          if (/^:/.test(key)) {
-            $id = key.match(/^:(.+)/)[1];
-            $route = val;
-            break;
-          }
-        }
-        if (_.isArray(data)) {
-          newElement = new Restify(this.$$url, this.$$route, this.$$parent);
-          if ($id) {
-            data = _.map(data, function(item) {
-              if (item[$id]) {
-                return _.extend(new Restify("" + newElement.$$url + "/" + item[$id], $route, newElement), item);
-              } else {
-                return item;
+        if (_.isObject(data)) {
+          if (wrap) {
+            $id = null;
+            $route = this.$$route;
+            _ref = this.$$route;
+            for (key in _ref) {
+              val = _ref[key];
+              if (/^:/.test(key)) {
+                $id = key.match(/^:(.+)/)[1];
+                $route = val;
+                break;
               }
-            });
-          }
-          newElement.push.apply(newElement, data);
-        } else if (_.isObject(data)) {
-          if ($id && data[$id]) {
-            newElement = new Restify("" + this.$$url + "/" + data[$id], this.$$route, this);
+            }
+            if (_.isArray(data)) {
+              newElement = new Restify(this.$$url, this.$$route, this.$$parent);
+              if ($id) {
+                data = _.map(data, function(item) {
+                  if (item[$id]) {
+                    return _.extend(new Restify("" + newElement.$$url + "/" + item[$id], $route, newElement), item);
+                  } else {
+                    return item;
+                  }
+                });
+              }
+              newElement.push.apply(newElement, data);
+            } else {
+              if ($id && data[$id]) {
+                newElement = new Restify("" + this.$$url + "/" + data[$id], this.$$route, this);
+              } else {
+                newElement = new Restify(this.$$url, this.$$route, this.$$parent);
+              }
+              newElement = _.extend(newElement, data);
+            }
           } else {
             newElement = new Restify(this.$$url, this.$$route, this.$$parent);
+            newElement = _.extend(newElement, data);
           }
-          newElement = _.extend(newElement, data);
         } else {
           newElement = new Restify(this.$$url, this.$$route, this.$$parent);
           newElement.data = data;
@@ -117,9 +124,7 @@
           }
           return $http(conf).then((function(_this) {
             return function(response) {
-              if (wrap) {
-                response.data = restify.call(_this, response.data);
-              }
+              response.data = restify.call(_this, response.data, wrap);
               return response.data;
             };
           })(this));

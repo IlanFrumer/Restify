@@ -25,41 +25,52 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
 
   ## wrap response data with resified objects
 
-  restify = (data)->
+
+  restify = (data, wrap)->
 
     newElement = null
-    $id = null
-    $route = @$$route          
-    
-    for key,val of @$$route
-      if /^:/.test(key)
-        $id = key.match(/^:(.+)/)[1]
-        $route = val
-        break
 
-    if _.isArray(data)
 
-      newElement = new Restify(@$$url,@$$route,@$$parent)
+    if _.isObject(data) 
 
-      if($id)
+      if wrap
+        $id = null
+        $route = @$$route          
 
-        data = _.map data, (item)->
+        for key,val of @$$route
+          if /^:/.test(key)
+            $id = key.match(/^:(.+)/)[1]
+            $route = val
+            break
 
-          if (item[$id])
-            return _.extend(new Restify("#{newElement.$$url}/#{item[$id]}", $route, newElement), item)
+        if _.isArray(data)
+
+          newElement = new Restify(@$$url,@$$route,@$$parent)
+
+          if($id)
+
+            data = _.map data, (item)->
+
+              if (item[$id])
+                return _.extend(new Restify("#{newElement.$$url}/#{item[$id]}", $route, newElement), item)
+              else
+                return item
+
+          newElement.push(data...)
+
+        else
+
+          if ($id && data[$id])
+            newElement = new Restify("#{@$$url}/#{data[$id]}",@$$route, this)                
           else
-            return item
+            newElement = new Restify(@$$url, @$$route, @$$parent)
 
-      newElement.push(data...)
-
-    else if _.isObject(data)
+          newElement = _.extend(newElement, data)
       
-      if ($id && data[$id])
-        newElement = new Restify("#{@$$url}/#{data[$id]}",@$$route, this)                
       else
-        newElement = new Restify(@$$url, @$$route, @$$parent)
 
-      newElement = _.extend(newElement, data)
+        newElement = new Restify(@$$url, @$$route, @$$parent)
+        newElement = _.extend(newElement, data)
 
     else
       newElement = new Restify(@$$url, @$$route, @$$parent)
@@ -106,7 +117,7 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
       delete conf.params if _.isEmpty(conf.params)
 
       $http(conf).then (response)=>
-        response.data = restify.call(this, response.data) if wrap
+        response.data = restify.call(this, response.data, wrap)
         return response.data
 
     $ureq: (config)-> @$req(config, false)

@@ -6,11 +6,11 @@
   "license": "MIT",
   "devDependencies": {
     "grunt": "~0.4.2",
-    "grunt-contrib-coffee": "~0.10.0",
-    "grunt-contrib-uglify": "~0.3.2",
-    "grunt-contrib-watch": "~0.5.3",
-    "grunt-karma": "~0.7.2",
-    "karma": "~0.11.14"
+    "grunt-contrib-coffee": "~0.10.1",
+    "grunt-contrib-uglify": "~0.4.0",
+    "grunt-contrib-watch": "~0.6.1",
+    "grunt-karma": "~0.8.2",
+    "karma": "~0.12.1"
   },
   "repository": {
     "type": "git",
