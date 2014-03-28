@@ -1,5 +1,5 @@
 ###
- * Restify v0.3.0
+ * Restify v0.3.1
  * (c) 2013 Ilan Frumer
  * License: MIT
 ###
@@ -30,46 +30,39 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
 
     newElement = null
 
-
     if _.isObject(data) 
 
-      if wrap
-        $id = null
-        $route = @$$route          
+      $id = null
+      $route = @$$route          
 
-        for key,val of @$$route
-          if /^:/.test(key)
-            $id = key.match(/^:(.+)/)[1]
-            $route = val
-            break
+      for key,val of @$$route
+        if /^:/.test(key)
+          $id = key.match(/^:(.+)/)[1]
+          $route = val
+          break
 
-        if _.isArray(data)
+      if _.isArray(data)
 
-          newElement = new Restify(@$$url,@$$route,@$$parent)
+        newElement = new Restify(@$$url,@$$route,@$$parent)
 
-          if($id)
+        if($id)
 
-            data = _.map data, (item)->
+          data = _.map data, (item)->
 
-              if (item[$id])
-                return _.extend(new Restify("#{newElement.$$url}/#{item[$id]}", $route, newElement), item)
-              else
-                return item
+            if (item[$id])
+              return _.extend(new Restify("#{newElement.$$url}/#{item[$id]}", $route, newElement), item)
+            else
+              return item
 
-          newElement.push(data...)
+        newElement.push(data...)
 
-        else
-
-          if ($id && data[$id])
-            newElement = new Restify("#{@$$url}/#{data[$id]}",@$$route, this)                
-          else
-            newElement = new Restify(@$$url, @$$route, @$$parent)
-
-          newElement = _.extend(newElement, data)
-      
       else
 
-        newElement = new Restify(@$$url, @$$route, @$$parent)
+        if ($id && data[$id])
+          newElement = new Restify("#{@$$url}/#{data[$id]}",@$$route, this)                
+        else
+          newElement = new Restify(@$$url, @$$route, @$$parent)
+
         newElement = _.extend(newElement, data)
 
     else
@@ -117,7 +110,7 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
       delete conf.params if _.isEmpty(conf.params)
 
       $http(conf).then (response)=>
-        response.data = restify.call(this, response.data, wrap)
+        response.data = restify.call(this, response.data) if wrap
         return response.data
 
     $ureq: (config)-> @$req(config, false)
