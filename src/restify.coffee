@@ -1,5 +1,5 @@
 ###
- * Restify v0.2.6
+ * Restify v0.3.0
  * (c) 2013 Ilan Frumer
  * License: MIT
 ###
@@ -13,6 +13,7 @@ original = {}
 module.config ['$httpProvider', ($httpProvider)->
   original.transformRequest  = $httpProvider.defaults.transformRequest[0]
   original.transformResponse = $httpProvider.defaults.transformResponse[0]
+
 ]
 
 module.factory 'restify', ['$http','$q', ($http, $q)->
@@ -22,61 +23,66 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
   uriToArray = (uri)->
     _.filter(uri.split('/'),(a)-> a)
 
-  deRestify = (obj)->  
-    _.omit (obj) , (v,k)->
-      /^\$/.test(k) || ( v && v instanceof Restify)
+  ## wrap response data with resified objects
 
-  ## configuration factory
 
-  configFactory  = (method, data)->
-    config = {}
-    config.url = @$$url
-    config.method = method
-    config.data = angular.toJson(deRestify(data)) unless angular.isUndefined(data)
+  restify = (data, wrap)->
 
-    # create parent tree
-    tree = [] ; _this = this
-    while _this
-      tree.push(_this)
-      _this = _this.$$parent
+    newElement = null
 
-    reqI = _.find(tree,'$$requestInterceptor')
-    resI = _.find(tree,'$$responseInterceptor')
 
-    config.transformRequest = (config)->
+    if _.isObject(data) 
+
+      if wrap
+        $id = null
+        $route = @$$route          
+
+        for key,val of @$$route
+          if /^:/.test(key)
+            $id = key.match(/^:(.+)/)[1]
+            $route = val
+            break
+
+        if _.isArray(data)
+
+          newElement = new Restify(@$$url,@$$route,@$$parent)
+
+          if($id)
+
+            data = _.map data, (item)->
+
+              if (item[$id])
+                return _.extend(new Restify("#{newElement.$$url}/#{item[$id]}", $route, newElement), item)
+              else
+                return item
+
+          newElement.push(data...)
+
+        else
+
+          if ($id && data[$id])
+            newElement = new Restify("#{@$$url}/#{data[$id]}",@$$route, this)                
+          else
+            newElement = new Restify(@$$url, @$$route, @$$parent)
+
+          newElement = _.extend(newElement, data)
       
-      config = original.transformRequest(config)
-      config = reqI.$$requestInterceptor(config) unless angular.isUndefined(reqI)
+      else
 
-      return config || $q.when(config)
+        newElement = new Restify(@$$url, @$$route, @$$parent)
+        newElement = _.extend(newElement, data)
 
-    config.transformResponse = (data, headers)->
+    else
+      newElement = new Restify(@$$url, @$$route, @$$parent)
+      newElement.data = data      
+      
+    return newElement
 
-      data = original.transformResponse(data, headers)
-      data = resI.$$responseInterceptor(data,headers) unless angular.isUndefined(resI)
-
-      return data || $q.when(data)
-
-    config.headers = _.reduceRight tree, ((headers, obj)-> _.defaults(headers, obj.$$headers || {})),{}
-
-    return config
-
-  ## promise wrapper
+  ## unwrap request data from resified objects
   
-  RestifyPromise = (promise, restifyData)->
-    deffered = $q.defer()
-
-    promise.success (data, status, headers, config)->
-
-      data = restifyData(data) unless angular.isUndefined(restifyData)
-
-      deffered.resolve(data)
-
-    promise.error (data, status, headers, config)->
-
-      deffered.reject(data)
-
-    deffered.promise
+  deRestify = (obj)->
+    if angular.isObject(obj)
+      _.omit (obj) , (v,k)-> /^\$/.test(k)
 
   ## class
 
@@ -87,6 +93,7 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
       @$$url = base
       @$$route = route
       @$$parent = parent
+      @$$config = {}
 
       for key,val of route
         base = "" if base == "/"
@@ -95,85 +102,49 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
           @["$#{$id}"] = (id)->
             new Restify("#{base}/#{id}", val, this)
         else
-          @[key] = new Restify("#{base}/#{key}", val, this)
+          @["$#{key}"] = new Restify("#{base}/#{key}", val, this)
 
-    $uget : (params = {})-> @$get(params, false)
+    $req: (config, wrap = true)->
+      
+      conf = {}
+      config.data = deRestify(config.data) if config.data
+      config.url = @$$url
 
-    $get : (params = {}, toWrap = true)->
+      angular.extend(conf, @$$config , config)
 
-      config = configFactory.call(this,'GET')
-      config.params = params unless _.isEmpty(params)
+      # defaults
+      conf.method = conf.method || "GET"
+      delete conf.params if _.isEmpty(conf.params)
 
-      RestifyPromise $http(config), (data)=>
-        
-        unless toWrap
-          return data
+      $http(conf).then (response)=>
+        response.data = restify.call(this, response.data, wrap)
+        return response.data
 
-        newElement = new Restify(@$$url,@$$route,@$$parent)
+    $ureq: (config)-> @$req(config, false)
 
-        if _.isArray(data)
+    $uget : (params = {})-> @$ureq({method: 'GET' , params: params});
+    $get : (params = {})-> @$req({method: 'GET' , params: params});
 
-          $id = undefined
-          $val = @$$route          
-          
-          for key,val of @$$route
-            if /^:/.test(key)
-              $id = key.match(/^:(.+)/)[1]
-              $val = val
-              break
+    $upost : (data) -> @$ureq({method: 'POST', data: data || this});
+    $post : (data) -> @$req({method: 'POST', data: data || this});
 
-          unless angular.isUndefined($id)
+    $uput : (data) -> @$ureq({method: 'PUT', data: data || this});
+    $put : (data) -> @$req({method: 'PUT', data: data || this});
 
-            data = _.map data, (elm)->
+    $upatch : (data) -> @$ureq({method: 'PATCH', data: data || this});
+    $patch : (data) -> @$req({method: 'PATCH', data: data || this});
 
-              if angular.isUndefined(elm[$id])
-                return elm
-              else
-                return _.extend(new Restify("#{newElement.$$url}/#{elm[$id]}", $val, newElement), elm)
+    $udelete : () -> @$ureq({method: 'DELETE'});
+    $delete : () -> @$req({method: 'DELETE'});
 
-          newElement.push(data...)
-        else
-          newElement = _.extend(newElement, data)
-          
-        return newElement
-
-    $delete : () ->
-      config = configFactory.call(this,'DELETE')
-      RestifyPromise $http(config)
-
-    $post : (data) ->
-      config = configFactory.call(this,'POST',data || this)
-      RestifyPromise $http(config)
-
-    $put  : (data) ->
-      config = configFactory.call(this,'PUT',data || this)
-      RestifyPromise $http(config)
-
-    $patch: (data) ->
-      config = configFactory.call(this,'PATCH',data || this)
-      RestifyPromise $http(config)
-
-    $setHeaders: (headers)->
-      @$$headers = {} if angular.isUndefined(@$$headers)
-
-      for key,val of headers        
-        @$$headers[key.toUpperCase()] = val
-
-      return this
-
-    $setResponseInterceptor: (callback)->
-      @$$responseInterceptor = callback
-      return this
-
-    $setRequestInterceptor: (callback)->
-      @$$requestInterceptor = callback
-      return this
-
-  ## factory
+    $config: (config)-> angular.extend($$config,config)
 
   return (baseUrl, callback)->
 
-    baseUrl = '/' + uriToArray(baseUrl).join('/')
+    match = baseUrl.match(/^(https?\:\/\/)?(.+)/) || []
+
+    baseUrl = (match[1] || '/') + uriToArray(match[2] || '').join('/')
+
     base = {}
 
     configuerer =
@@ -196,5 +167,5 @@ module.factory 'restify', ['$http','$q', ($http, $q)->
 
     callback(configuerer)
 
-    return new Restify(baseUrl, base , undefined)
+    return new Restify(baseUrl, base , null)
 ]
